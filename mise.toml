@@ -1,0 +1,25 @@
+[settings]
+jobs = 1
+
+[tools]
+python = "3.14"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.p]
+run = "poetry"
+
+[tasks.install]
+run = """
+pip install poetry
+poetry install
+"""
+
+[tasks.update]
+run = """
+pip install -U pip
+pip install -U poetry
+poetry update
+poetry show -o
+"""

@@ -1,0 +1,18 @@
+[project]
+name = "glimpse-architecture"
+version = "0.0.1"
+description = "Framework-agnostinc clean architecture idea for Python projects"
+authors = [
+    {name = "Radosław Ganczarek",email = "radoslaw@ganczarek.in"}
+]
+license = "MIT License"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "mkdocs (>=1.6.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
