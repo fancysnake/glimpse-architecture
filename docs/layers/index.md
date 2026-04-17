@@ -10,7 +10,7 @@ GLIMPSE defines seven layers. Each layer has a single responsibility and a fixed
 ┌─────────────────────────────────────────────┐
 │  edges   (settings, wsgi/asgi — outside GLIMPSE)
 └─────────────────────────────────────────────┘
-         ↓ wires everything together
+         ↓ mounts middleware, loads settings
 ┌─────────────────┐
 │     inits        │  DI container, middleware
 └─────────────────┘

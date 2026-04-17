@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **Depends on** | pacts, mills, specs |
+| **Depends on** | pacts, mills |
 | **Depended on by** | nothing (entry point) |
 
 `gates` never imports from `links` directly. Data access happens through `request.di.uow` injected by `inits`.

@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **Depends on** | pacts, specs |
+| **Depends on** | pacts |
 | **Depended on by** | gates, inits |
 
 `mills` must never import from Django, SQLAlchemy, or any ORM. If a service needs data access, it receives a UoW or repository via constructor injection.
