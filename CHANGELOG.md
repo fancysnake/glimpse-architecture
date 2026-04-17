@@ -1,21 +1,13 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## 2026-04-17
 
-The format is based on [Keep a Changelog],
-and this project adheres to [Semantic Versioning].
+Initial publication of the GLIMPSE Architecture reference site.
 
-## [Unreleased]
-
-
-## [0.0.1] - 2026-04-17
-
-- initial release
-
-<!-- Links -->
-[keep a changelog]: https://keepachangelog.com/en/1.0.0/
-[semantic versioning]: https://semver.org/spec/v2.0.0.html
-
-<!-- Versions -->
-[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/fancysnake/glimpse-architecture/releases/tag/v0.0.1
+- Seven-layer architecture reference (pacts, specs, mills, links, gates, inits, edges)
+- Slicing vocabulary and rules documentation
+- File layout conventions
+- Patterns and drift red flags
+- Django implementation guide
+- Import Linter configuration guide
+- Claude skill reference and installation instructions
