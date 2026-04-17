@@ -2,7 +2,7 @@
 
 **Purpose:** Repositories, Storage, Unit of Work, and external clients — the infrastructure layer.
 
-`links` is where GLIMPSE touches the outside world: databases, payment providers, email services, object storage. Every external integration lives here. The rest of the system talks to `links` only through protocols defined in `pacts`.
+`links` is where GLIMPSE touches the outside world: databases, payment providers, email services, object storage. The rest of the system talks to `links` only through protocols defined in `pacts`.
 
 ## Depends on / depended on by
 

@@ -1,6 +1,6 @@
 # Django Implementation Guide
 
-This guide describes how to implement GLIMPSE in a Django project. The layer concepts are framework-agnostic; this page covers the Django-specific details.
+The layer concepts are framework-agnostic; this page covers the Django-specific details.
 
 ## Project layout
 

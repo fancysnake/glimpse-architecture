@@ -4,7 +4,7 @@ GLIMPSE ships as a [Claude Code](https://claude.ai/code) skill — a compact ref
 
 ## What it does
 
-When active, the skill gives Claude Code a complete, precise understanding of GLIMPSE conventions: layer responsibilities, slicing rules, import boundaries, patterns, and drift red flags. You can then ask Claude to review new code for architectural drift, suggest where a new file belongs, or flag import violations — without repeating the conventions in every prompt.
+The skill loads the full GLIMPSE conventions — layer responsibilities, slicing rules, import boundaries, patterns, and drift red flags — so you can ask Claude to review code, suggest where a new file belongs, or flag import violations without repeating the rules each time.
 
 ## Installation
 

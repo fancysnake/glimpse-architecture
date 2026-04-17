@@ -44,4 +44,4 @@ myproject/
 
 ## Note
 
-`edges` is listed for completeness. Most architectural decisions happen in the six inner layers. If you are structuring a new project, focus on [pacts](pacts.md), [mills](mills.md), and [links](links.md) first.
+`edges` is listed for completeness. Most architectural decisions happen in the six inner layers.
