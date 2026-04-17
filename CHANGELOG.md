@@ -1,8 +1,14 @@
 # Changelog
 
-## 2026-04-17
+All notable changes to this project will be documented in this file.
 
-Initial publication of the GLIMPSE Architecture reference site.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+## [0.1.0] - 2026-04-17
+
+### Added
 
 - Seven-layer architecture reference (pacts, specs, mills, links, gates, inits, edges)
 - Slicing vocabulary and rules documentation
