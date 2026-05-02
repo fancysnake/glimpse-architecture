@@ -22,26 +22,25 @@ GLIMPSE defines seven layers. Each layer has a single responsibility and a fixed
 ┌──────────────────────────┐
 │          mills            │  business logic (framework-free)
 └──────────────────────────┘
-              ↓
-┌──────────────────────────┐
-│          specs            │  configuration constants
-└──────────────────────────┘
-              ↓
-┌──────────────────────────┐
-│          pacts            │  contracts — depends on nothing
-└──────────────────────────┘
+       ↓                ↓
+┌──────────────┐  ┌──────────────────────────┐
+│    specs      │  │          pacts            │  contracts — depends on nothing
+│ (mills only)  │  └──────────────────────────┘
+└──────────────┘            ↑
+       ↓                    │
+       └────────────────────┘
 ```
 
-Arrows point in the direction of dependency (A → B means A imports B). `inits` is the only layer that wires `links` into `gates`; neither imports the other directly.
+Arrows point in the direction of dependency (A → B means A imports B). `inits` is the only layer that wires `links` into `gates`; neither imports the other directly. `specs` sits below `mills` and is consumed only by `mills` — `gates`, `links`, and `inits` must not import from it.
 
 ## Layer summary
 
 | Layer | Purpose | Depends on |
 |-------|---------|-----------|
 | [pacts](pacts.md) | Protocols, DTOs, errors, enums, TypedDicts | nothing |
-| [specs](specs.md) | Pure configuration constants | pacts |
-| [mills](mills.md) | Business logic and services | pacts |
-| [links](links.md) | Repositories, Storage, UoW, external clients | pacts + ORM |
+| [specs](specs.md) | Business invariants (pure constants, no IO) — consumed only by mills | pacts |
+| [mills](mills.md) | Business logic and services | pacts + specs |
+| [links](links.md) | Repositories, Storage, external clients | pacts + ORM |
 | [gates](gates.md) | Views, forms, URLs, templatetags, CLI commands | pacts + mills |
 | [inits](inits.md) | DI container, middleware — wires links into gates | pacts + mills + links |
 | [edges](edges.md) | settings, wsgi/asgi, manage.py | outside GLIMPSE |

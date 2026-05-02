@@ -13,45 +13,78 @@
 
 ## What it contains
 
-- DI container classes or factory functions
-- Middleware that attaches the container to the request (`request.di`)
-- Request lifecycle setup (opening/closing UoW, transaction management)
+- DI container classes / factory functions for repositories and services
+- Middleware that attaches the container to the request (`request.repositories`, `request.services`)
+- Request lifecycle setup (transaction management when needed)
 
 ## How it wires things
 
-A typical setup:
+Two flat namespaces — one for repositories, one for services. Each leaf is a `@cached_property` so it is constructed at most once per request.
 
 ```python
-class DI:
+# inits/repositories.py
+from functools import cached_property
+
+class Repositories:
     def __init__(self, request):
         self._request = request
 
     @cached_property
-    def uow(self) -> UnitOfWork:
-        return UnitOfWork(db=self._request.db_connection)
+    def proposals(self) -> ProposalRepositoryProtocol:
+        return ProposalRepository(storage=self._request.storage)
 
-
-class DIMiddleware:
-    def __call__(self, request):
-        request.di = DI(request)
-        return self.get_response(request)
+    @cached_property
+    def events(self) -> EventRepositoryProtocol:
+        return EventRepository(storage=self._request.storage)
 ```
 
-`gates` calls `request.di.uow.proposals` — it never constructs or imports a repository.
+```python
+# inits/services.py
+from functools import cached_property
+
+class Services:
+    def __init__(self, request):
+        self._request = request
+        self._repos = request.repositories
+
+    @cached_property
+    def proposals(self) -> ProposalService:
+        return ProposalService(
+            proposals=self._repos.proposals,
+            events=self._repos.events,
+            transaction=DjangoTransaction(),
+        )
+```
+
+Gates call `request.services.<name>.method(...)` — they never construct or import a repository or service.
 
 ## Slicing axis
 
-Files are sliced by **subdomain**.
+Files are sliced by **subdomain** for the wiring of subdomain-specific factories, but the public namespaces (`repositories` and `services`) start **flat**. Add buckets only when a namespace exceeds ~12 leaves; never create a folder for a single leaf.
 
 ```
-inits/billing.py
-inits/auth.py
+inits/
+├── repositories.py     # flat container of repos
+├── services.py         # flat container of services
+└── middleware.py       # attaches request.repositories, request.services
 ```
 
-The container itself may live in a single file if the project is small; split by subdomain as it grows.
+When `services` grows past ~12 leaves, group by subdomain:
+
+```
+inits/services/
+├── __init__.py         # Services aggregate exposed to the request
+├── billing.py
+├── auth.py
+└── content.py
+```
+
+A bucket appears only when it would hold ≥2 leaves. `inits/services/chronology/panel/personal_data_fields.py` with no sibling is a drift symptom — flatten it.
 
 ## Red flags
 
-- `gates` constructing repository instances without going through `request.di` — breaks the wiring
+- `gates` constructing repository or service instances without going through `request.services` / `request.repositories` — breaks the wiring
 - `mills` importing from `inits` — `mills` must remain framework-free
 - `inits` containing business logic — it should only wire, never decide
+- Folder created for a single leaf (`inits/services/chronology/panel/personal_data_fields.py` with no sibling) — flatten until the bucket is justified
+- A unit-of-work god object exposing every repository — services should declare the specific protocols they need; repositories live on the flat `inits/repositories.py` namespace
