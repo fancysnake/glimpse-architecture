@@ -27,15 +27,21 @@ GLIMPSE uses a precise vocabulary to describe how code is organised within layer
 : Bounded contexts nest inside subdomains. `billing` might contain `invoicing` and `subscriptions` as separate contexts.
 
 **Entity**
-: A persistence-level concept: one shape, one DTO, one repository, one place.
-: Entities are the slicing axis for `links`. Each entity gets its own file in `links/db/{adapter}/`.
+: A persistence-level concept: the unit a DTO + repository wraps.
+: Conceptual, not a file-layout axis. `links` slices by **kind** (per-adapter — e.g. `models` / `repositories` for `db/django`), not by entity. A `users` and a `proposals` repository can live in the same `repositories.py` until the file's size or merge friction earns a split.
+
+**Kind** *(links only)*
+: A per-adapter categorisation of files inside an adapter directory.
+: For `db/django`: `models` (internal ORM classes) and `repositories` (public, fulfilling protocols from `pacts`).
+: For an external API adapter (e.g. `payment_api/stripe`): kinds may be `transport`, `types`, `signer` — or the adapter may stay a single file.
+: The right kinds are adapter-specific.
 
 ## Hierarchy
 
 ```
 subdomain
 └── bounded context
-    └── entity
+    └── entity (conceptual — wrapped by DTO + repository, not a folder)
 ```
 
 ## Slicing rules by layer
@@ -53,21 +59,35 @@ inits/{subdomain}.py
 
 `pacts` and `mills` must mirror each other. If `pacts` splits a subdomain into contexts, `mills` must do the same — and vice versa.
 
-### links — port / adapter / entity
+### links — port / adapter / kind
 
 ```
-links/{port}/{adapter}/{entity}.py        # ORM model + repository
-links/{port}/{adapter}.py                 # single-file external client
+# Small (default)
+links/{port}/{adapter}/
+    __init__.py                # facade — public surface
+    {kind}.py                  # one file per kind
+
+# Promoted when a kind crosses ~1000 lines
+links/{port}/{adapter}/
+    __init__.py                # facade — unchanged public import path
+    {kind}/
+        __init__.py
+        {module}.py
+
+links/{port}/{adapter}.py      # single-file external client
 ```
 
 Examples:
 
 ```
-links/db/django/user.py
-links/db/django/proposal.py
-links/payment_api/stripe.py
+links/db/django/__init__.py        # facade — re-exports SessionRepository, UserRepository, ...
+links/db/django/models.py          # ORM models (internal)
+links/db/django/repositories.py    # repository implementations (public)
+links/payment_api/stripe.py        # single-file external client
 links/email/sendgrid.py
 ```
+
+The `kind` axis is per-adapter. `db/django` has `models` and `repositories`; `payment_api/stripe` may have none, or `transport` / `types` / `signer`. The baseline across adapters is **halve, don't shard, and arrange parts to avoid circular imports**.
 
 ### gates — port / adapter / subdomain
 

@@ -11,9 +11,9 @@ This is a **reference**, not a template. GLIMPSE describes how to structure code
 
 ```
 pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
-specs   Pure configuration constants. Depends on pacts.
-mills   Business logic, services. Depends on pacts. No framework, no ORM.
-links   Repositories, Storage, UoW, external clients. Depends on pacts + ORM.
+specs   Business invariants (pure constants, no IO). Depends on pacts. Consumed only by mills.
+mills   Business logic, services. Depends on pacts + specs. No framework, no ORM.
+links   Repositories, Storage, external clients. Depends on pacts + ORM.
 gates   Views, forms, URLs, templatetags, CLI commands. Depends on pacts + mills.
 inits   DI container, middleware. Wires links into gates.
 edges   settings, wsgi/asgi, manage. Outside GLIMPSE proper.
