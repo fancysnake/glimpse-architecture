@@ -1,89 +1,152 @@
 # Slicing Vocabulary & Rules
 
-!!! warning "Status: Experimental — evolving with active use"
+!!! warning "Status: 0.1 — conventions may still shift"
 
-GLIMPSE uses a precise vocabulary to describe how code is organised within layers. Understanding these terms is necessary to place any new file correctly.
+GLIMPSE uses a precise vocabulary to describe how code is organised within
+layers. Understanding these terms is necessary to place any new file correctly.
 
 ## Vocabulary
 
 **Port**
 : The delivery mechanism, named after the domain concept it serves.
-: Examples: `web`, `cli`, `db`, `payment_api`, `email`
-: A port describes *what* the integration does from the domain's perspective, not *how*.
+: Examples: `cli`, `web`, `db`, `payment_api`, `email`
+: A port describes *what* the integration does from the domain's perspective,
+  not *how*.
 
 **Adapter**
 : The specific technology implementing a port.
-: Examples: `django`, `stripe`, `blik`, `sendgrid`
-: One port can have multiple adapters. `payment_api/stripe` and `payment_api/blik` are interchangeable implementations of the same port.
+: Examples: `postgres`, `sqlite`, `argparse`, `stripe`, `sendgrid`
+: One port can have multiple adapters. `db/postgres` and `db/sqlite` are
+  interchangeable implementations of the same port, as are `payment_api/stripe`
+  and `payment_api/paypal`.
+: One technology can serve multiple ports. A full-stack framework shipping both
+  an ORM and a request layer appears as `db/{framework}` and `web/{framework}` —
+  two separate adapters that share nothing but a name.
+
+**Kind**
+: A category of module inside one `links` adapter — the slicing axis for `links`.
+: Examples: `models`, `repositories` for a `db` adapter; `transport`, `types`,
+  `signer` for an API client.
+: Kinds are per-adapter. The `db` shape is not a universal template.
 
 **Subdomain**
 : A broad business area.
 : Examples: `auth`, `billing`, `content`, `notifications`
-: A subdomain groups everything related to one business concern. It is the primary slicing axis for `pacts`, `mills`, `specs`, and `inits`.
+: A subdomain groups everything related to one business concern. It is the
+  primary slicing axis for `pacts`, `mills`, and `specs`.
 
 **Bounded context**
 : A responsibility boundary with its own ubiquitous language.
 : Two bounded contexts can share a name (like `User`) and mean different things.
-: Bounded contexts nest inside subdomains. `billing` might contain `invoicing` and `subscriptions` as separate contexts.
+: Bounded contexts nest inside subdomains. `billing` might contain `invoicing`
+  and `subscriptions` as separate contexts.
 
 **Entity**
-: A persistence-level concept: one shape, one DTO, one repository, one place.
-: Entities are the slicing axis for `links`. Each entity gets its own file in `links/db/{adapter}/`.
+: A persistence-level concept: the unit that a DTO and a repository wrap.
+: Conceptual, **not a file-layout axis**. `links` slices by kind, so one
+  `models.py` holds many entities' models. There is no
+  `links/db/{adapter}/{entity}.py`.
 
 ## Hierarchy
 
-```
+```text
 subdomain
 └── bounded context
     └── entity
 ```
 
+## Boundary vs core
+
+Before choosing a layer, decide what the code *does*:
+
+- It **crosses a boundary** — a data shape moving between layers → it is a
+  contract → `pacts`
+- It **enforces business rules** — aggregates, value objects, invariants → it is
+  core → `mills`
+
+The classic case is DTOs: they feel like domain objects but stay in `pacts` —
+see [pacts](../layers/pacts.md) for the circular-import argument.
+
 ## Slicing rules by layer
 
-### pacts, mills, specs, inits — by subdomain, then bounded context
+### pacts, mills, specs — by subdomain, then bounded context
 
-```
+These start as single modules and become packages when they earn it. See
+[Growing rules](growing.md).
+
+```text
+pacts.py                                  # start here
 pacts/{subdomain}.py                      # flat while subdomain is small
 pacts/{subdomain}/{bounded_context}.py    # split when subdomain grows
 mills/{subdomain}.py
 mills/{subdomain}/{bounded_context}.py
 specs/{subdomain}.py
-inits/{subdomain}.py
 ```
 
-`pacts` and `mills` must mirror each other. If `pacts` splits a subdomain into contexts, `mills` must do the same — and vice versa.
+Each `pacts` module holds all boundary contracts for that subdomain or context —
+DTOs, write TypedDicts, protocols, errors. Split by domain concern, never by
+technical kind.
 
-### links — port / adapter / entity
+`pacts` and `mills` must mirror each other. If `pacts` splits a subdomain into
+contexts, `mills` must do the same — and vice versa.
 
+### inits — by what it wires
+
+`inits` starts as a single module and splits into its registries, never by subdomain:
+
+```text
+inits.py                 # start here
+inits/repositories.py    # promoted
+inits/services.py
+inits/middleware.py
 ```
-links/{port}/{adapter}/{entity}.py        # ORM model + repository
-links/{port}/{adapter}.py                 # single-file external client
+
+Subdomain grouping appears only as sub-buckets inside a registry past ~12
+leaves. See [inits](../layers/inits.md).
+
+### links — port / adapter / kind
+
+Packages from day one: the port is known before you write any code.
+
+```text
+links/{port}/{adapter}.py                 # the whole adapter is one module
+links/{port}/{adapter}/{kind}.py          # once the kinds separate
+links/{port}/{adapter}/{kind}/{module}.py # when a kind crosses ~1000 lines
+links/{port}/{adapter}/__init__.py        # facade — re-exports the public surface
 ```
 
 Examples:
 
-```
-links/db/django/user.py
-links/db/django/proposal.py
+```text
+links/db/sqlite.py
+links/db/postgres/models.py
+links/db/postgres/repositories.py
 links/payment_api/stripe.py
 links/email/sendgrid.py
 ```
 
 ### gates — port / adapter / subdomain
 
-```
+Packages from day one, for the same reason.
+
+```text
+gates/{port}/{adapter}.py                 # flat while there is one subdomain
 gates/{port}/{adapter}/{subdomain}.py
 gates/{port}/{adapter}/{subdomain}/{bounded_context}.py
 ```
 
 Examples:
 
-```
-gates/web/django/proposals.py
-gates/web/django/billing/invoices.py
-gates/cli/django/reports.py
+```text
+gates/cli/argparse.py
+gates/cli/argparse/reports.py
+gates/web/flask/proposals.py
+gates/web/flask/billing/invoices.py
 ```
 
 ## Symmetry rule
 
-`pacts/` and `mills/` must use the same slicing axis at every level. If `pacts/billing/` has `invoicing.py` and `subscriptions.py`, then `mills/billing/` must also have `invoicing.py` and `subscriptions.py`. Mismatched axes are a drift red flag.
+`pacts/` and `mills/` must use the same slicing axis at every level. If
+`pacts/billing/` has `invoicing.py` and `subscriptions.py`, then
+`mills/billing/` must also have `invoicing.py` and `subscriptions.py`.
+Mismatched axes are a drift red flag.

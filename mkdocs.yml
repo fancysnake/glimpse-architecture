@@ -46,6 +46,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Why GLIMPSE: why.md
   - Layers:
     - Overview: layers/index.md
     - pacts: layers/pacts.md
@@ -58,7 +59,12 @@ nav:
   - Slicing:
     - Vocabulary & Rules: slicing/index.md
     - File Layout: slicing/file-layout.md
-  - Patterns & Red Flags: patterns/index.md
+    - Growing Rules: slicing/growing.md
+  - Patterns:
+    - Patterns & Red Flags: patterns/index.md
+    - Request Lifecycle: patterns/lifecycle.md
+    - Dependency Direction: patterns/dependency-direction.md
+    - Testing: patterns/testing.md
   - Guides:
     - Django: guides/django.md
     - Import Linter: guides/import-linter.md

@@ -1,55 +1,74 @@
 # Patterns & Red Flags
 
-!!! warning "Status: Experimental — evolving with active use"
+!!! warning "Status: 0.1 — conventions may still shift"
 
-These patterns describe how GLIMPSE layers collaborate at runtime. They are conventions enforced by code review, not by importlinter.
+These patterns describe how GLIMPSE layers collaborate at runtime. They are
+conventions enforced by code review, not by importlinter.
 
 ## Patterns
 
-### 1. Views return DTOs, never models
+### 1. Entry points return DTOs, never models
 
-Templates and API responses receive Pydantic DTOs from `pacts`. ORM instances never leave `links`.
+Templates, serializers, and CLI output receive DTOs from `pacts`. ORM instances
+never leave `links`.
 
 ```python
-# gates/web/django/proposals.py
-def detail(request: RootRequestProtocol, pk: int) -> HttpResponse:
-    proposal: ProposalDTO = request.di.uow.proposals.get(pk)
-    return render(request, "detail.html", {"proposal": proposal})
+# gates/cli/argparse/proposals.py
+def show(context: RootRequestProtocol, pk: int) -> None:
+    proposal: ProposalDTO = context.services.proposals.get(pk)
+    print(proposal.title)
 ```
 
-### 2. Data access through UoW
+### 2. Entry points call services, not repositories
 
-Gates never import repositories or ORM models. All data access goes through `request.di.uow.{repo}`.
+Gates never import repositories or persistence models. The data path out of a
+gate is a service call, and services are exposed as a flat namespace wired in
+`inits/services.py`.
 
 ```python
 # correct
-proposals = request.di.uow.proposals.list_active()
+proposals = context.services.proposals.list_active()
 
 # wrong — imports a concrete class from links
-from links.db.django.proposal import ProposalRepository
+from myproject.links.db.postgres import ProposalRepository
 ```
 
-### 3. Repository identity map
+If no service exists for what you need, create one — a mill in `mills`, a
+protocol in `pacts`, a leaf in `inits/services.py` — before writing the gate.
 
-Each repository follows: **check cache → query ORM → store in cache → return DTO**. An entity is loaded at most once per request.
+### 3. Services take the protocols they use
 
-### 4. Services take UoW via constructor
-
-Mills services receive their dependencies at construction time. Never via method arguments, never via direct import.
+A mill service receives the two or three repository protocols it actually needs,
+plus a `TransactionProtocol` if it writes. Never a whole Unit of Work, never a
+direct import of a concrete repository, never a dependency passed as a method
+argument.
 
 ```python
 class ProposalService:
-    def __init__(self, uow: UnitOfWorkProtocol) -> None:
-        self._uow = uow
+    def __init__(
+        self,
+        proposals: ProposalRepositoryProtocol,
+        users: UserRepositoryProtocol,
+        transaction: TransactionProtocol,
+    ) -> None:
+        self._proposals = proposals
+        self._users = users
+        self._transaction = transaction
 ```
 
-### 5. Mills are framework-free
+This is the interface segregation principle at the service boundary. `inits`
+knows the concrete classes and does the wiring.
 
-`mills` must not import from Django, SQLAlchemy, or any ORM. If a test for a mill requires a live database, the mill has leaked infrastructure.
+### 4. Mills are framework-free
 
-### 6. Writes use TypedDicts
+`mills` must not import an ORM, an HTTP layer, or a CLI parser. It sees only
+protocols and DTOs from `pacts` and constants from `specs`. If a test for a mill
+requires a live database, the mill has leaked infrastructure.
 
-DTOs (Pydantic) are for reads. TypedDicts are for writes — they travel from `gates` into `mills` as typed input.
+### 5. Writes use TypedDicts
+
+DTOs are for reads. TypedDicts are for writes — they travel from `gates` into
+`mills` as typed input.
 
 ```python
 # pacts/proposals.py
@@ -63,74 +82,137 @@ class ProposalDTO(BaseModel):
     title: str
 ```
 
-### 7. Request typed as RootRequestProtocol
+### 6. Entry-point context typed as RootRequestProtocol
 
-Gate functions type the request parameter as `RootRequestProtocol` from `pacts`, not as the framework's concrete request class.
+Gate functions type their context parameter — the HTTP request, the CLI command
+context, whatever the port provides — as `RootRequestProtocol` from `pacts`, not
+as the framework's concrete class.
 
 ```python
-def create(request: RootRequestProtocol) -> HttpResponse:
+def create(context: RootRequestProtocol) -> None:
     ...
 ```
 
-### 8. Multi-repo writes use uow.atomic()
+### 7. Multi-repo writes use transaction.atomic()
 
-Any operation that writes to more than one repository is wrapped in `uow.atomic()` to ensure atomicity.
+Any operation writing to more than one repository is wrapped in
+`transaction.atomic()`, obtained from the injected `TransactionProtocol`.
 
 ```python
-with self._uow.atomic():
-    self._uow.proposals.save(proposal)
-    self._uow.events.record(event)
+with self._transaction.atomic():
+    self._proposals.save(proposal)
+    self._events.record(event)
 ```
 
-### 9. New repo methods need a matching Protocol in pacts
+Entry points never start transactions. Atomicity is a service concern.
 
-Before adding a method to a repository in `links`, define it in the corresponding Protocol in `pacts`. `mills` depends on the protocol, not the concrete class.
+### 8. New repo methods need a matching Protocol in pacts
 
-### 10. New DTOs need from_attributes=True
+Before adding a method to a repository in `links`, define it in the
+corresponding Protocol in `pacts`. `mills` depends on the protocol, not the
+concrete class.
 
-Every new Pydantic DTO in `pacts` needs:
+### 9. DTOs must be constructible from a store row
+
+Every DTO in `pacts` must be buildable from what `links` loaded. With Pydantic:
 
 ```python
 model_config = ConfigDict(from_attributes=True)
 ```
 
-This allows repositories to construct DTOs from ORM instances via `ProposalDTO.model_validate(orm_instance)`.
+This lets repositories do `ProposalDTO.model_validate(row)`.
 
-### 11. New cached entities go on Storage; repos as @cached_property on UoW
+### 10. Registries are flat @cached_property trees
 
-When adding a new entity:
+New repositories become a `@cached_property` on `inits/repositories.py`. New
+services become a `@cached_property` on `inits/services.py`. Both stay flat
+until they cross ~12 leaves — see [Growing rules](../slicing/growing.md).
 
-- Add it to `Storage` in `links` if it needs in-memory caching
-- Expose its repository as a `@cached_property` on the UoW class
+### 11. Protocol implementations declare the protocol as a base class
+
+Naming the protocol as a base class makes the intent explicit and lets the type
+checker verify conformance, instead of leaving it to a structural match that can
+silently drift.
+
+```python
+class ProposalRepository(ProposalRepositoryProtocol):
+    ...
+```
+
+The exception is very generic structural protocols — `TransactionProtocol`,
+callbacks — with multiple unrelated duck-typed implementations.
 
 ---
 
 ## Drift red flags
 
 !!! danger "These patterns indicate architectural drift"
-
     If you see any of these in a codebase, treat them as bugs.
 
-**Layer kept as single file instead of package**
-: `pacts.py`, `mills.py`, etc. at the project root. Each layer must be a directory. A single file cannot be split without breaking imports.
+**`links.py` or `gates.py` as a single file**
+: Both need the `{port}/{adapter}` axis from day one. The port is knowable
+  before any code is written; deferring it costs an import rewrite the day a
+  second adapter appears.
+
+**A layer promoted to a package before it earned it**
+: `pacts/`, `specs/`, `mills/`, or `inits/` as a directory while there is one
+  subdomain, well under ~1000 lines, and no merge friction. The tree is
+  anticipating subdomains you have not discovered.
+
+**Mismatched promotion between pacts and mills**
+: `pacts/` is a package but `mills.py` is still flat. The symmetry rule covers
+  the module-to-package step too.
 
 **Nested folders holding one or two small files**
-: `pacts/billing/invoicing/create.py` when `pacts/billing/invoicing.py` would do. Premature nesting makes the structure harder to navigate without adding clarity.
+: `pacts/billing/invoicing/create.py` when `pacts/billing/invoicing.py` would
+  do. A folder needs at least two leaves to exist.
 
 **Port axis inside mills or specs**
-: `mills/web/proposals.py` or `specs/api/...`. Mills and specs have no delivery-mechanism axis. If you see a port word inside these layers, the code belongs elsewhere.
+: `mills/web/proposals.py` or `specs/api/...`. Mills and specs have no
+  delivery-mechanism axis. If you see a port word inside these layers, the code
+  belongs elsewhere.
+
+**specs imported from links, gates, or inits**
+: `specs` are business invariants, and business rules are enforced in `mills`
+  alone. A constant needed elsewhere is either configuration (`edges`) or a
+  contract (`pacts`).
 
 **pacts split by technical kind instead of subdomain**
-: `pacts/dtos.py`, `pacts/protocols.py`, `pacts/repos/`. These group by what the type *is*, not by what domain concern it belongs to. This forces unrelated subdomains to share files and makes the package harder to navigate.
+: `pacts/dtos.py`, `pacts/protocols.py`, `pacts/repos/`. These group by what the
+  type *is*, not by what domain concern it belongs to. This forces unrelated
+  subdomains to share files and makes the package harder to navigate.
 
 **common/ or shared/ folder in any layer**
-: This is a magnet for unrelated code. Extract truly shared types to `pacts`; if something is shared across layers, it belongs there.
+: This is a magnet for unrelated code. Extract truly shared types to `pacts`; if
+  something is shared across layers, it belongs there.
 
 **Mismatched slicing axes between pacts and mills**
-: `pacts/billing/invoicing.py` exists but `mills/billing.py` has not split yet — or vice versa. The two layers must mirror each other.
+: `pacts/billing/invoicing.py` exists but `mills/billing.py` has not split yet —
+  or vice versa. The two layers must mirror each other.
 
-**links/db/django/{context}.py**
-: `links` files are per-entity, not per-subdomain or context. `links/db/django/billing.py` holding multiple entities' models is a sign that it needs to be split by entity.
+**Model and repository in the same links file**
+: This collapses the internal-vs-public boundary. Models are internal to the
+  adapter; repositories are its public surface.
+
+**links files named per entity**
+: `links/db/postgres/user.py`. `links` slices by kind, not by entity. One
+  `models.py` holds many entities' models.
+
+**Suffix-sibling links files**
+: `repositories_billing.py`, `models_auth.py`. Promote the kind to a `{kind}/`
+  package with submodules instead. Halve, don't shard.
+
+**A links facade that re-exports models, or omits a public repository**
+: `links/{port}/{adapter}/__init__.py` *is* the public surface. Whatever it
+  exports is public; everything else is internal.
+
+**An ORM model imported from outside links/**
+: Use the repository protocol from `pacts` instead.
+
+**A gate that opens a transaction**
+: Atomicity is a service concern.
 
 **mills/{entity}.py holding context-specific write logic**
-: Entity-level mills (e.g. `mills/proposal.py`) are only for entity-level invariants that don't belong to any specific bounded context. Context-specific logic belongs in a context-level mill file.
+: Entity-level mills (e.g. `mills/proposal.py`) are only for entity-level
+  invariants that don't belong to any specific bounded context. Context-specific
+  logic belongs in a context-level mill file.

@@ -1,16 +1,21 @@
 # Django Implementation Guide
 
-The layer concepts are framework-agnostic; this page covers the Django-specific details.
+The layer concepts are framework-agnostic. This page covers the Django-specific
+details: Django is a full-stack framework, so it shows up as **two separate
+adapters** — `db/django` for the ORM and `web/django` for the request layer.
+They share a name and nothing else.
 
 ## Project layout
 
-GLIMPSE layers live alongside the Django project package at the root of the repository:
+GLIMPSE layers live alongside the Django project package at the root of the
+repository. A young project keeps the axis-free layers flat:
 
-```
+```text
 myproject/
-├── pacts/
-├── specs/
-├── mills/
+├── pacts.py
+├── specs.py
+├── mills.py
+├── inits.py
 ├── links/
 │   └── db/
 │       └── django/         # ORM models + repository implementations
@@ -19,23 +24,23 @@ myproject/
 │   │   └── django/         # views, forms, URL configurations
 │   └── cli/
 │       └── django/         # management commands
-├── inits/                  # DI container + middleware
 └── edges/
     ├── settings/
     ├── wsgi.py
     └── asgi.py
 ```
 
-The Django project package (containing `settings.py` originally) moves into `edges/`.
+The Django project package (the one that originally held `settings.py`) moves
+into `edges/`.
 
-## links — ORM models and repositories
+## links/db/django — models and repositories
 
-Each entity gets its own file in `links/db/django/`:
+The adapter is sliced by **kind**, not by entity. Models are internal;
+repositories are the public surface, exposed through the facade.
 
 ```python
-# links/db/django/proposal.py
+# links/db/django/models.py
 from django.db import models
-from pacts.proposals import ProposalDTO, ProposalRepositoryProtocol
 
 
 class Proposal(models.Model):
@@ -44,33 +49,48 @@ class Proposal(models.Model):
 
     class Meta:
         db_table = "proposals"
-
-
-class ProposalRepository:
-    def __init__(self, storage):
-        self._storage = storage
-
-    def get(self, pk: int) -> ProposalDTO:
-        if cached := self._storage.proposals.get(pk):
-            return cached
-        orm = Proposal.objects.get(pk=pk)
-        dto = ProposalDTO.model_validate(orm)
-        self._storage.proposals[pk] = dto
-        return dto
 ```
+
+```python
+# links/db/django/repositories.py
+from myproject.links.db.django.models import Proposal
+from myproject.pacts.proposals import ProposalDTO, ProposalRepositoryProtocol
+
+
+class ProposalRepository(ProposalRepositoryProtocol):
+    def get(self, pk: int) -> ProposalDTO:
+        return ProposalDTO.model_validate(Proposal.objects.get(pk=pk))
+```
+
+```python
+# links/db/django/__init__.py — the facade
+from myproject.links.db.django.repositories import ProposalRepository, UserRepository
+
+__all__ = ["ProposalRepository", "UserRepository"]
+```
+
+Nothing outside the adapter imports `models`. The repository class names its
+protocol as a base class, so mypy verifies conformance.
+
+!!! note "Django technicality"
+    When `models.py` grows past ~1000 lines and is promoted to a `models/`
+    package, `models/__init__.py` must re-export the model classes — Django
+    discovers models by importing the package. `repositories/__init__.py` can
+    stay empty, because the facade lives at the parent.
 
 ## gates/web/django — views and forms
 
-Views type the request as `RootRequestProtocol` and access data through `request.di.uow`:
+Views type the request as `RootRequestProtocol` and reach data through a
+service. They never touch a repository.
 
 ```python
 # gates/web/django/proposals.py
 from django.shortcuts import render
-from pacts.core import RootRequestProtocol
+from myproject.pacts.core import RootRequestProtocol
 
 
 def detail(request: RootRequestProtocol, pk: int):
-    proposal = request.di.uow.proposals.get(pk)
+    proposal = request.services.proposals.get(pk)
     return render(request, "proposals/detail.html", {"proposal": proposal})
 ```
 
@@ -87,55 +107,92 @@ urlpatterns = [
 
 ## gates/cli/django — management commands
 
-Management commands live in `gates/cli/django/`. They follow standard Django management command structure but type their dependencies through `pacts` protocols.
+Management commands live in `gates/cli/django/`. They follow standard Django
+management command structure but type their dependencies through `pacts`
+protocols and call services, exactly as views do.
 
-```
+```text
 gates/cli/django/
 └── management/
     └── commands/
         └── generate_reports.py
 ```
 
-## inits — DI container and middleware
+## mills — services
 
-`inits` constructs the UoW and attaches it to the request:
+A service takes the repository protocols it uses and a `TransactionProtocol`. It
+never imports from `links` and never sees Django.
 
 ```python
-# inits/container.py
+# mills.py  (or mills/proposals.py once promoted)
+class ProposalService:
+    def __init__(
+        self,
+        proposals: ProposalRepositoryProtocol,
+        events: EventRepositoryProtocol,
+        transaction: TransactionProtocol,
+    ) -> None:
+        self._proposals = proposals
+        self._events = events
+        self._transaction = transaction
+
+    def publish(self, proposal_id: int) -> None:
+        with self._transaction.atomic():
+            self._proposals.mark_published(proposal_id)
+            self._events.record(
+                DomainEvent(type="proposal.published", entity_id=proposal_id)
+            )
+```
+
+## inits — registries and middleware
+
+`inits` is the only place that names concrete classes. It builds the two
+registries and attaches them to the request.
+
+```python
+# inits.py  (or inits/repositories.py + inits/services.py once promoted)
 from functools import cached_property
-from links.db.django.proposal import ProposalRepository
-from links.db.django.user import UserRepository
+
+from django.db import transaction
+
+from myproject.links.db.django import ProposalRepository, UserRepository
 
 
-class UnitOfWork:
-    def __init__(self):
-        self._storage = Storage()
-
-    @cached_property
-    def proposals(self) -> ProposalRepository:
-        return ProposalRepository(self._storage)
-
-    @cached_property
-    def users(self) -> UserRepository:
-        return UserRepository(self._storage)
-
+class DjangoTransaction:
     def atomic(self):
-        from django.db import transaction
         return transaction.atomic()
 
 
-class DI:
+class Repositories:
     @cached_property
-    def uow(self) -> UnitOfWork:
-        return UnitOfWork()
+    def proposals(self) -> ProposalRepository:
+        return ProposalRepository()
+
+    @cached_property
+    def users(self) -> UserRepository:
+        return UserRepository()
 
 
-class DIMiddleware:
+class Services:
+    def __init__(self, repositories: Repositories) -> None:
+        self._repos = repositories
+        self._transaction = DjangoTransaction()
+
+    @cached_property
+    def proposals(self) -> ProposalService:
+        return ProposalService(
+            proposals=self._repos.proposals,
+            events=self._repos.events,
+            transaction=self._transaction,
+        )
+
+
+class ServicesMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        request.di = DI()
+        request.services = Services(Repositories())
         return self.get_response(request)
 ```
 
@@ -143,54 +200,38 @@ Register the middleware in `edges/settings/base.py`:
 
 ```python
 MIDDLEWARE = [
-    ...
-    "inits.middleware.DIMiddleware",
+    ...,
+    "myproject.inits.ServicesMiddleware",
 ]
 ```
 
 ## RootRequestProtocol
 
-Define the protocol in `pacts` so that `gates` and `mills` can reference the DI container without importing from `inits`:
+Define the protocol in `pacts` so that `gates` can reference the services
+namespace without importing from `inits`:
 
 ```python
-# pacts/core.py
+# pacts.py  (or pacts/core.py)
 from typing import Protocol
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from inits.container import UnitOfWork
 
 
-class DIProtocol(Protocol):
-    uow: "UnitOfWork"
+class ServicesProtocol(Protocol):
+    proposals: ProposalServiceProtocol
 
 
 class RootRequestProtocol(Protocol):
-    di: DIProtocol
+    services: ServicesProtocol
     user: ...
     method: str
     POST: ...
     GET: ...
 ```
 
-## Multi-repo writes
-
-Wrap writes that span multiple repositories in `uow.atomic()`:
-
-```python
-# mills/proposals.py
-class ProposalService:
-    def __init__(self, uow: UnitOfWorkProtocol) -> None:
-        self._uow = uow
-
-    def publish(self, proposal_id: int) -> None:
-        with self._uow.atomic():
-            proposal = self._uow.proposals.get(proposal_id)
-            event = DomainEvent(type="proposal.published", entity_id=proposal_id)
-            self._uow.proposals.mark_published(proposal_id)
-            self._uow.events.record(event)
-```
+Note that `pacts` types the namespace through *service protocols*, not through
+the concrete `Services` class in `inits`. A `TYPE_CHECKING` import from `inits`
+would invert the dependency.
 
 ## Import linter
 
-See the [Import Linter guide](import-linter.md) for the `pyproject.toml` configuration that enforces GLIMPSE layer boundaries.
+See the [Import Linter guide](import-linter.md) for the `pyproject.toml`
+configuration that enforces GLIMPSE layer boundaries.
