@@ -13,10 +13,10 @@ Templates, serializers, and CLI output receive DTOs from `pacts`. ORM instances
 never leave `links`.
 
 ```python
-# gates/cli/argparse/proposals.py
-def show(context: RootRequestProtocol, pk: int) -> None:
-    proposal: ProposalDTO = context.services.proposals.get(pk)
-    print(proposal.title)
+# gates/web/django/proposals.py
+def detail(request: RootRequest, pk: int) -> HttpResponse:
+    proposal: ProposalDTO = request.services.proposals.get(pk)
+    return render(request, "proposals/detail.html", {"proposal": proposal})
 ```
 
 ### 2. Entry points call services, not repositories
@@ -27,7 +27,7 @@ gate is a service call, and services are exposed as a flat namespace wired in
 
 ```python
 # correct
-proposals = context.services.proposals.list_active()
+proposals = request.services.proposals.list_active()
 
 # wrong — imports a concrete class from links
 from myproject.links.db.postgres import ProposalRepository
@@ -39,9 +39,10 @@ protocol in `pacts`, a leaf in `inits/services.py` — before writing the gate.
 ### 3. Services take the protocols they use
 
 A mill service receives the two or three repository protocols it actually needs,
-plus a `TransactionProtocol` if it writes. Never a whole Unit of Work, never a
-direct import of a concrete repository, never a dependency passed as a method
-argument.
+plus a `TransactionProtocol` if it writes. Never a direct import of a concrete
+repository, never a dependency passed as a method argument. With an ambient ORM
+(Django), never a whole Unit of Work either — with a session-based ORM
+(SQLAlchemy), the session already is one, and injecting it is idiomatic.
 
 ```python
 class ProposalService:
@@ -68,7 +69,9 @@ requires a live database, the mill has leaked infrastructure.
 ### 5. Writes use TypedDicts
 
 DTOs are for reads. TypedDicts are for writes — they travel from `gates` into
-`mills` as typed input.
+`mills` as typed input, and from `mills` into `links` as what repository write
+methods accept (`create(data: CreateProposalDict) -> ProposalDTO`). A
+`CreateXDict` carries no `id` — the store assigns it.
 
 ```python
 # pacts/proposals.py
@@ -82,16 +85,21 @@ class ProposalDTO(BaseModel):
     title: str
 ```
 
-### 6. Entry-point context typed as RootRequestProtocol
+### 6. Web requests typed via a gate-local subclass
 
-Gate functions type their context parameter — the HTTP request, the CLI command
-context, whatever the port provides — as `RootRequestProtocol` from `pacts`, not
-as the framework's concrete class.
+A web gate types the request as a typing-only subclass of the framework's
+request class — defined inside the adapter, never instantiated. The `inits`
+middleware mutates the real request; the subclass gives the annotation
+something true-shaped to say. Only `ServicesProtocol` comes from `pacts`.
 
 ```python
-def create(context: RootRequestProtocol) -> None:
-    ...
+# gates/web/django/entities.py
+class RootRequest(HttpRequest):
+    services: ServicesProtocol
 ```
+
+CLI gates have no context — they receive dependencies at construction, wired
+by `inits`.
 
 ### 7. Multi-repo writes use transaction.atomic()
 
@@ -100,8 +108,8 @@ Any operation writing to more than one repository is wrapped in
 
 ```python
 with self._transaction.atomic():
-    self._proposals.save(proposal)
-    self._events.record(event)
+    self._proposals.save(proposal_dto)
+    self._audit.record(entry_dict)
 ```
 
 Entry points never start transactions. Atomicity is a service concern.
@@ -130,9 +138,11 @@ until they cross ~12 leaves — see [Growing rules](../slicing/growing.md).
 
 ### 11. Protocol implementations declare the protocol as a base class
 
-Naming the protocol as a base class makes the intent explicit and lets the type
-checker verify conformance, instead of leaving it to a structural match that can
-silently drift.
+Where a protocol exists, its implementation names it as a base class — the
+intent is explicit and the type checker verifies conformance, instead of
+leaving it to a structural match that can silently drift. (Not every class has
+a protocol — see
+[pacts](../layers/pacts.md#protocols-exist-where-a-boundary-needs-them).)
 
 ```python
 class ProposalRepository(ProposalRepositoryProtocol):
@@ -141,6 +151,16 @@ class ProposalRepository(ProposalRepositoryProtocol):
 
 The exception is very generic structural protocols — `TransactionProtocol`,
 callbacks — with multiple unrelated duck-typed implementations.
+
+### 12. Domain errors are caught at the call-site
+
+Mills raise coarse, shared errors from `pacts` (`NotFoundError`, not
+`ProposalNotFound`). The gate wraps the service call and decides what the
+error means for that screen — message, fallback, redirect. No central
+error-to-status mapping. On the way in, adapter code translates store
+exceptions into `pacts` errors (e.g. `IntegrityError` →
+`DatabaseConstraintError` inside `savepoint()`), so no ORM exception ever
+reaches a mill.
 
 ---
 
@@ -212,7 +232,7 @@ callbacks — with multiple unrelated duck-typed implementations.
 **A gate that opens a transaction**
 : Atomicity is a service concern.
 
-**mills/{entity}.py holding context-specific write logic**
-: Entity-level mills (e.g. `mills/proposal.py`) are only for entity-level
-  invariants that don't belong to any specific bounded context. Context-specific
-  logic belongs in a context-level mill file.
+**Business rules in form validation**
+: Gates validate format — an email, an int, a date. Meaning ("email or
+  username required", seat limits) belongs in mills, which alone may read
+  `specs`.

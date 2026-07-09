@@ -10,6 +10,8 @@ first axis — the port — is known before any code exists.
 pacts.py                                 # start here
 pacts/{subdomain}.py
 pacts/{subdomain}/{bounded_context}.py
+pacts/{port}.py                          # port machinery, e.g. pacts/db.py
+pacts/services.py                        # wiring contracts, mirrors inits
 
 specs.py
 specs/{subdomain}.py
@@ -96,13 +98,14 @@ myproject/
 ├── links/
 │   └── db/
 │       └── sqlite.py
-├── gates/
-│   └── cli/
-│       └── argparse.py
-└── edges/
-    ├── settings/
-    └── main.py
+└── gates/
+    └── cli/
+        └── argparse.py
 ```
+
+No `edges/` — a CLI project may not need one; `pyproject.toml` names the
+`inits` entry point by dotted string. `edges/` appears when a framework does:
+settings, `wsgi.py`, `manage.py`.
 
 The same project grown:
 
@@ -129,7 +132,8 @@ myproject/
 │   └── services.py
 └── edges/
     ├── settings/
-    └── main.py
+    ├── manage.py
+    └── wsgi.py
 ```
 
 ## `__init__.py` policy

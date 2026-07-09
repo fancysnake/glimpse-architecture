@@ -21,9 +21,12 @@ myproject/
 ├── mills.py
 ├── inits.py
 ├── links/db/sqlite.py
-├── gates/cli/argparse.py
-└── edges/
+└── gates/cli/argparse.py
 ```
+
+No `edges/` — a CLI project doesn't need one. The entry point is a dotted
+string in `pyproject.toml` (`[project.scripts]` → `myproject.inits:run`), and
+`inits` composes the gates from there.
 
 No empty scaffolding, no guessing at subdomains. The [growing
 rules](slicing/growing.md) say exactly when a module becomes a package and when
@@ -35,6 +38,18 @@ this way and grow it into a product without a rewrite.
 `services`, `core`, `domain`, `infrastructure` mean something different in every
 codebase and every framework. `pacts`, `mills`, `links` mean exactly one thing,
 so an import line is self-evident and a grep never returns false positives.
+
+If you already speak hexagonal, the translation is:
+
+| GLIMPSE | Classic term |
+| --- | --- |
+| `mills` | application / domain core |
+| `pacts` | ports + boundary models |
+| `links` | driven (secondary) adapters |
+| `gates` | driving (primary) adapters |
+| `inits` | composition root |
+| `edges` | bootstrap / configuration |
+| `specs` | no classic equivalent — policy constants |
 
 ## Enforcement — human and AI
 

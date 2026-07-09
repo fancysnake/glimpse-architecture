@@ -10,15 +10,39 @@ description: GLIMPSE Architecture Reference — layer responsibilities, slicing 
 ```text
 gates   Entry points: request handlers, forms, routing, CLI commands. pacts + mills.
 links   Repositories, external clients. pacts + ORM / driver / SDK.
-inits   DI container, middleware. Wires links into gates.
-mills   Business logic, services. Depends on pacts + specs. No framework, no ORM.
+inits   DI container, middleware. Wires links into gates. Only layer that may import gates.
+mills   Business logic, services. Depends on pacts + specs. No side-effect imports.
 pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
 specs   Business invariants (pure constants, no IO). Only for mills.
-edges   Settings, process entry points, management scripts. Outside GLIMPSE.
+edges   Settings, wsgi, manage.py. Outside GLIMPSE; optional (CLI projects skip it).
 ```
 
 Import rules enforced by `importlinter` (`pyproject.toml` →
 `[tool.importlinter]`). No exceptions without explicit approval.
+
+**Composition is per-port.** `inits` composes the object graph everywhere; how
+it reaches gates differs. Web: the framework dispatches to gates, so `inits`
+never imports them — middleware builds `Services()` per request and attaches
+it to the request (the framework's thread-safe seam). CLI: nothing dispatches,
+so `inits` imports the gate classes, injects mills into their constructors,
+and is named by dotted string in `pyproject.toml`
+(`[project.scripts]` → `myproject.inits.cli:run`).
+
+**edges is two-way isolated.** Nothing imports `edges`; `edges` imports
+nothing first-party — it names project code only by dotted string
+(`DJANGO_SETTINGS_MODULE`, `MIDDLEWARE`, `ROOT_URLCONF`). The root middleware
+imports services, so it lives in `inits`, not `edges`.
+
+**"Framework-free" means no side effects, not package names.** Forbidden in
+`mills`: imports that do IO, touch global state, or own control flow (ORM,
+HTTP machinery, settings access). Pure computation is fine wherever it comes
+from — `django.utils.text.slugify` qualifies. Enforcement level (ban package /
+review-guarded / ban effectful subtrees) is a per-project choice.
+
+**No DDD tactical patterns.** GLIMPSE has no aggregates or value objects —
+data moves as DTOs and write TypedDicts; invariants live in service code.
+Subdomains/bounded contexts are a borrowed slicing heuristic, not doctrine —
+slice by another axis if it fits the project better.
 
 ## File layout
 
@@ -44,6 +68,8 @@ links/{port}/{adapter}.py                   # e.g. links/db/sqlite.py
 
 # Grown project
 pacts/{subdomain}.py                    # or pacts/{subdomain}/{context}.py
+pacts/{port}.py                         # port machinery (e.g. pacts/db.py)
+pacts/services.py                       # wiring contracts, mirrors inits
 mills/{subdomain}.py                    # or mills/{subdomain}/{context}.py
 specs/{subdomain}.py
 inits/repositories.py                   # inits splits by what it wires, never by subdomain
@@ -95,17 +121,43 @@ inits/services.py
 ```
 
 Each pacts module holds all boundary contracts for that subdomain/context:
-DTOs, write TypedDicts, protocols, errors. Split by domain concern, not by
-technical kind — no `pacts/dtos.py`, `pacts/protocols.py`, or `pacts/repos/`
-directories.
+DTOs, write TypedDicts, repository protocols, errors. Split by domain concern,
+not by technical kind — no `pacts/dtos.py`, `pacts/protocols.py`, or
+`pacts/repos/` directories, and never a `pacts/core.py` or `common` bucket.
+
+**pacts placement algorithm** — pacts mirrors the whole system; place each
+contract by three questions, in order: (1) tied to a subdomain? →
+`pacts/{subdomain}.py` (DTOs, write dicts, domain errors, repo protocols);
+(2) tied to a port? → `pacts/{port}.py` (e.g. `pacts/db.py` for
+`TransactionProtocol` — test: would it survive a total change of business
+domain?); (3) about the wiring? → mirror the inits registry
+(`pacts/services.py` for `ServicesProtocol`).
+
+**Protocols exist where a boundary needs them, not by policy.** Repository
+protocols: essential — mills depend on them. Service protocols: optional —
+needed for services exposed on the web context (pacts types the namespace) and
+recommended for service-to-service dependencies. Gate classes: no protocols —
+nothing outside inits refers to them.
+
+**Errors are coarse and shared** (`NotFoundError`, not `ProposalNotFound`);
+the gate catching one decides what it means for that screen, at the call-site
+— no central error-to-status mapping. Adapter code translates store exceptions
+into pacts errors (`IntegrityError` → `DatabaseConstraintError`), so no ORM
+exception reaches a mill.
 
 **Boundary vs core — where does it go?** Decide by what the code does. If it
 *crosses a boundary* (data shapes moving between layers) it is a contract →
-`pacts` (DTOs, protocols). If it *enforces business rules* (aggregates, value
-objects, invariants) it is core → `mills`. DTOs stay in `pacts` even though
+`pacts` (DTOs, protocols). If it *enforces business rules* (service logic,
+invariants) it is core → `mills`. DTOs stay in `pacts` even though
 they feel like domain objects: repo protocols in `pacts` return them, so moving
 them to `mills` would make `pacts → mills → pacts` circular. A DTO is a data
 contract for a port, not a domain object.
+
+**Repo methods follow the needs.** Parameters express variation within a use
+case; a different scope is a different method. Filtering an event's meetings
+by facilitator or topic: parameters. Switching events or including
+never-accepted meetings: a second use case → a second method. No generic
+query objects through the protocol.
 
 **links — `{port}/{adapter}/{kind}`. gates — `{port}/{adapter}/{subdomain}`.**
 
@@ -149,12 +201,14 @@ modules stay internal. For a `db` adapter specifically, that means external
 code does `from myproject.links.db.postgres import SessionRepository` and
 never reaches `models`.
 
-One port can have multiple adapters: `db/postgres` and `db/sqlite` are
-interchangeable implementations behind the same repository protocols, as are
-`payment_api/stripe` and `payment_api/paypal`. One technology can serve
-multiple ports: a full-stack framework that ships both an ORM and a request
-layer appears as `db/{framework}` and `web/{framework}` — two separate
-adapters that share nothing but a name.
+One port can have multiple adapters — usually **coexisting**, not
+interchangeable: `payment_api/stripe` and `payment_api/paypal` are both wired
+and both live, and a mill decides per operation which to call. Genuine
+substitution (`db/postgres` vs `db/sqlite`) is the rarer case — one adapter
+wired per deployment, chosen in `inits`. One technology can serve multiple
+ports: a full-stack framework that ships both an ORM and a request layer
+appears as `db/{framework}` and `web/{framework}` — two separate adapters that
+share nothing but a name.
 
 **Symmetry rule:** `pacts/` ↔ `mills/` must mirror each other — both sliced by
 subdomain/context. If one splits a subdomain into contexts, the other must too.
@@ -193,8 +247,9 @@ Concrete thresholds — none is a hard line, all are "watch for this":
   into `views/`. Do **not** create suffixed siblings (`kind1_a.py`). The
   baseline is **halve, don't shard, and arrange parts to avoid circular
   imports**; the right grouping is adapter-specific (e.g. `db` models often
-  split by foreign-key dependency hierarchy or aggregate, repositories by
-  aggregate group; an external-API adapter may not need to split at all). The
+  split by foreign-key dependency hierarchy — the entities that change
+  together — repositories along the same lines; an external-API adapter may
+  not need to split at all). The
   `links/{port}/{adapter}/__init__.py` facade keeps the public import path
   stable across the promotion. Framework technicality: if the ORM discovers
   model classes by importing the package (Django does), `models/__init__.py`
@@ -208,40 +263,70 @@ hatches, not invitations.
 
 1. **Entry points return DTOs, never models.** Templates, serializers, and CLI
    output receive DTOs from pacts. ORM instances never leave `links`.
-2. **Entry points call services, not repos.** `context.services.<name>.method(...)`
-   is the data path out of a view or command — never import a repo or model in
-   `gates`, never reach a repository directly. Services are exposed as a flat
-   namespace wired in `inits/services.py`.
+2. **Entry points call services, not repos.** `request.services.<name>.method(...)`
+   is the data path out of a view — never import a repo or model in `gates`,
+   never reach a repository directly. Services are exposed as a flat namespace
+   wired in `inits/services.py`; CLI gates receive theirs at construction.
 3. **Services take specific repo protocols + a `TransactionProtocol` via
-   constructor** — not a god-object Unit of Work, not imports of concrete
-   repos. ISP at the service boundary: declare the two-or-three protocols
-   actually used.
-4. **Mills framework-free.** Only protocols and DTOs from pacts, constants from
-   specs. No ORM, no HTTP, no CLI parser.
-5. **Writes use TypedDicts.** DTOs for reads, TypedDicts for writes.
-6. **Entry-point context typed as `RootRequestProtocol`** from pacts — the HTTP
-   request, the CLI command context, whatever the port provides.
+   constructor** — not imports of concrete repos, not dependencies passed as
+   method arguments. With an ambient ORM (Django), never a whole Unit of Work;
+   with a session-based ORM (SQLAlchemy) the session already is one, and
+   injecting it is idiomatic. ISP at the service boundary: declare the
+   two-or-three protocols actually used.
+4. **Mills have no side-effect imports.** Only protocols and DTOs from pacts,
+   constants from specs, pure helpers from anywhere. No ORM, no HTTP, no CLI
+   parser, no settings access.
+5. **Writes use TypedDicts.** DTOs for reads, TypedDicts for writes — gates →
+   mills as input, mills → links as what repo write methods accept
+   (`create(data: CreateProposalDict) -> ProposalDTO`; a `CreateXDict` has no
+   `id` — the store assigns it).
+6. **Web requests typed via a gate-local typing-only subclass** of the
+   framework request (`class RootRequest(HttpRequest): services:
+   ServicesProtocol` in the web adapter) — never instantiated; middleware
+   mutates the real request. Only `ServicesProtocol` comes from pacts. CLI
+   gates have no context.
 7. **Multi-repo writes use `transaction.atomic()` from `TransactionProtocol`.**
-   Entry points never start transactions; that is a service concern.
+   Entry points never start transactions; that is a service concern. The
+   protocol: `atomic()` and `savepoint()`, both returning a context manager;
+   `savepoint()` rolls back only its block on constraint violation,
+   re-raising as a pacts error with the outer transaction usable. The
+   implementation is inits binding glue, not a links adapter.
 8. New repo methods need matching Protocol in pacts.
 9. **DTOs must be constructible from a store row or ORM instance** — with
    Pydantic, `model_config = ConfigDict(from_attributes=True)`.
 10. New repositories exposed as `@cached_property` on `inits/repositories.py`
     (flat). New services exposed as `@cached_property` on `inits/services.py`
-    (flat). See **Growing rules** for when to bucket.
-11. **Protocol implementations declare the protocol as a base class** — so the
-    intent is explicit and the type checker verifies conformance. Exception:
-    very generic structural protocols (`TransactionProtocol`, callbacks) with
-    multiple unrelated duck-typed implementations.
+    (flat, zero-arg `Services()` builds its own dependencies — no DI inside
+    the composition root). Lifetimes: `@cached_property` = per container
+    (per request); `@functools.lru_cache` on a module-level inits factory =
+    per process (pooled clients, connections). See **Growing rules** for when
+    to bucket.
+11. **Protocol implementations declare the protocol as a base class** — where
+    a protocol exists — so the intent is explicit and the type checker
+    verifies conformance. Exception: very generic structural protocols
+    (`TransactionProtocol`, callbacks) with multiple unrelated duck-typed
+    implementations.
+12. **Gates validate format, mills validate meaning.** A gate checks input
+    parses (an email, an int); a mill checks it makes sense ("email or
+    username required", seat limits from specs). Parse vs semantics, not
+    single-field vs cross-field. Permissions: trivial checks
+    (`is_authenticated`) in gates; rule-bearing permission systems in mills.
+13. **Django apps are markers, not structure.** An `AppConfig` sits at the
+    lowest directory Django must discover (models, commands, templatetags),
+    with a custom `label` (names all end in `.django` — default labels
+    collide). Migrations live in `links/db/{framework}/migrations/`; admin
+    (model-coupled by design) at `links/db/django/admin.py`; plain `Form`s
+    only, never `ModelForm`. Framework-owned surfaces (`request.user`,
+    `django_login`) are named exemptions — contain them in gates; mills see
+    ids and DTOs.
 
 ## Dependency direction
 
 **Cross-subdomain access is fine.** Repos cross subdomains freely — data access
 is not behavior. An entry point in one subdomain reading another subdomain's
 users is normal, not a boundary violation. The smell to watch is duplicated
-*behavior* across subdomains; the fix is an aggregate invariant (enforced at
-construction/transition) or a shared lower-level mill function, not a rule
-against cross-subdomain repo reads.
+*behavior* across subdomains; the fix is a shared lower-level mill function
+that both call, not a rule against cross-subdomain repo reads.
 
 **Service-to-service calls are fine** when reusing real orchestration. The
 genuine smells are narrower: layering inversion (a low-level unit depending on a
@@ -253,11 +338,21 @@ another for a single trivial read it could do via a repo).
 The layer under test dictates the test type — not convenience, not what is
 easiest for coverage:
 
-- Pure-logic core (`mills`) → **unit** tests. No IO; mock at the highest level
-  and assert every mock call.
+- Pure-logic core (`mills`) → **unit** tests. No IO; the service gets
+  `MagicMock`s for the repo protocols (and for data when only one field
+  matters); assert how the mocks were called. `MagicMock` covers
+  `TransactionProtocol` — it speaks the context-manager protocol.
 - IO-bearing boundary layers (`links`, `gates`, adapters, templates) →
   **integration** tests against real infrastructure. Mock at the lowest level or
-  not at all; assert side effects.
+  not at all; assert side effects. A gate test is a full-request test via the
+  framework's test client, asserting **all** fields of the response (context
+  data, redirect URL, status), with strict templates that fail on unknown
+  variables.
+
+Tests live in a repo-root `tests/` split by type — `tests/unit/` (mills, plus
+pure helpers from any layer; organised by convenience, not mirroring the
+code) and `tests/integration/` (gates by port + subdomain, links by port +
+adapter).
 
 An uncovered line is covered by the test type that owns its layer — never raise
 `links`/`gates` coverage with a mock-everything unit test of IO-bearing code
@@ -281,6 +376,8 @@ unit-tested wherever it lives.
 - `specs` imported from `links`, `gates`, or `inits` — specs are only for mills
 - `pacts/dtos.py`, `pacts/protocols.py`, or `pacts/repos/` instead of
   `pacts/{subdomain}.py`
+- `pacts/core.py` — a `common/` bucket wearing a nicer name; use the
+  subdomain / port / wiring axes
 - `common/` or `shared/` folder in any layer
 - `pacts/` sliced by entity while `mills/` sliced by context (or vice versa) —
   axes must match
@@ -292,7 +389,7 @@ unit-tested wherever it lives.
   repo class (the facade is the public surface)
 - Suffix-sibling links files (`repositories_billing.py`, `models_auth.py`) —
   promote to a `{kind}/` package with submodules instead
-- `mills/{entity}.py` holding context-specific write logic (entity-level mills
-  exist only for entity-level invariants)
+- Business rules in form validation — gates check format; meaning belongs in
+  mills
 - Gate reaching data without a service — create one in mills + protocol in
   pacts + leaf in `inits/services.py` before writing the view

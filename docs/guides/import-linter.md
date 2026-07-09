@@ -68,12 +68,6 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "mills is framework-free"
-type = "forbidden"
-source_modules = ["myproject.mills"]
-forbidden_modules = ["django", "sqlalchemy", "flask", "argparse"]
-
-[[tool.importlinter.contracts]]
 name = "links does not import gates or inits"
 type = "forbidden"
 source_modules = ["myproject.links"]
@@ -86,16 +80,87 @@ source_modules = ["myproject.gates"]
 forbidden_modules = ["myproject.links", "myproject.inits"]
 
 [[tool.importlinter.contracts]]
-name = "inits does not import gates"
+name = "nothing imports edges"
 type = "forbidden"
-source_modules = ["myproject.inits"]
-forbidden_modules = ["myproject.gates"]
+source_modules = [
+    "myproject.pacts",
+    "myproject.specs",
+    "myproject.mills",
+    "myproject.links",
+    "myproject.gates",
+    "myproject.inits",
+]
+forbidden_modules = ["myproject.edges"]
+
+[[tool.importlinter.contracts]]
+name = "edges imports nothing first-party"
+type = "forbidden"
+source_modules = ["myproject.edges"]
+forbidden_modules = [
+    "myproject.pacts",
+    "myproject.specs",
+    "myproject.mills",
+    "myproject.links",
+    "myproject.gates",
+    "myproject.inits",
+]
 ```
 
 The third contract is the one people forget. `specs` holds business invariants,
 and business rules are enforced in `mills` alone — so `links`, `gates`, and
 `inits` must not import it. Without this contract, `specs` slowly turns into a
 project-wide constants dump.
+
+The last two encode [edges' two-way isolation](../layers/edges.md): nothing
+imports `edges`, and `edges` reaches project code only by dotted string.
+
+There is deliberately no "inits does not import gates" contract. `inits` is
+the composition root and the **only** layer that may import `gates` — a CLI
+project's `inits` constructs the gate classes directly. In a web-only project,
+where middleware attachment makes the import unnecessary, you may add that
+contract as a stricter local policy.
+
+## The mills framework contract
+
+"Framework-free" means **no side effects** — no IO, no global state, no
+control flow ownership. Pure functions are fine wherever they live, even
+`django.utils.text.slugify`. A linter checks names, not purity, so how to
+enforce the line is a per-project decision:
+
+- **A — ban the framework wholesale.** Fully machine-enforced; pure helpers
+  detour through a `pacts` re-export, an injected protocol, or a copied
+  function.
+
+    ```toml
+    [[tool.importlinter.contracts]]
+    name = "mills is framework-free"
+    type = "forbidden"
+    source_modules = ["myproject.mills"]
+    forbidden_modules = ["django", "sqlalchemy", "flask", "argparse"]
+    ```
+
+- **B — allow pure framework functions; reviewers guard the line.** Drop the
+  contract for the framework package and rely on review. Cheapest day to day,
+  weakest enforcement.
+- **C — ban the effectful subtrees only.** Mechanical enforcement that matches
+  the real rule, at the cost of a longer list:
+
+    ```toml
+    [[tool.importlinter.contracts]]
+    name = "mills has no side-effect imports"
+    type = "forbidden"
+    source_modules = ["myproject.mills"]
+    forbidden_modules = [
+        "django.db",
+        "django.http",
+        "django.forms",
+        "django.template",
+        "django.conf",
+        "sqlalchemy",
+        "flask",
+        "argparse",
+    ]
+    ```
 
 ## Running the linter
 
@@ -116,9 +181,9 @@ boundary is violated. `import-linter` also supports:
 
 A `layers` contract can express most of the graph in one stanza, but the GLIMPSE
 graph is not a strict stack — `gates` and `links` are siblings that must not see
-each other, `inits` wires `gates` by injection without importing it, and `specs`
-has exactly one permitted consumer. Those facts are what the `forbidden`
-contracts above encode.
+each other, `inits` alone may import `gates`, and `specs` has exactly one
+permitted consumer. Those facts are what the `forbidden` contracts above
+encode.
 
 ## What the linter cannot catch
 

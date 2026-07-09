@@ -11,7 +11,9 @@ home, and the business logic never touches framework internals.
 The name is the layers: **G**ates, **L**inks, **I**nits, **M**ills, **P**acts,
 **S**pecs, **E**dges. The words are deliberately non-standard — they collide
 with nothing, so `mills` in an import always means the layer, never a
-framework's `services` or somebody's `core`.
+framework's `services` or somebody's `core`. The acronym is a mnemonic, not a
+dependency diagram — the stack reads pacts → specs → mills → links/gates →
+inits.
 
 This is a **reference**, not a template. GLIMPSE describes how to structure
 code; it does not generate it. For a real-world example, see

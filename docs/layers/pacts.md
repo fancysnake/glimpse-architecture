@@ -14,16 +14,36 @@ from nothing. All cross-layer communication happens through types defined here.
 
 ## What it contains
 
-- **Protocols** — structural interfaces that `mills` services and `links`
-  repositories implement
+- **Repository protocols** — structural interfaces that `links` repositories
+  implement and `mills` services depend on
 - **DTOs** (Pydantic models) — read-side data shapes passed from `links` →
   `mills` → `gates`
 - **Write TypedDicts** — write-side input shapes passed from `gates` → `mills`
-- **Errors** — domain exceptions raised by mills and caught by gates
+  and from `mills` → `links` (a `CreateXDict` has no `id` — the store assigns
+  it)
+- **Errors** — domain exceptions raised by mills and caught by gates. Keep
+  them coarse and shared (`NotFoundError`), not per-entity
+  (`ProposalNotFound`) — the gate catching it decides what it means for that
+  screen
 - **Enums** — shared enumeration types
-- **`RootRequestProtocol`** — the typed interface for the entry-point context
-  used in gates
 - **`TransactionProtocol`** — the atomicity interface a service depends on
+- **Service protocols** — only where a boundary needs them (see below)
+
+## Protocols exist where a boundary needs them
+
+Not every class gets a protocol. Repository protocols are essential — they are
+the decoupling `mills` is built on. Service protocols are optional; their
+consumers are `inits` (which knows the concrete classes by design) and gates.
+Two cases earn one:
+
+- **Web context typing** — `ServicesProtocol` types the services namespace on
+  the request, and it lives in `pacts`, which imports nothing — so every
+  service exposed on the web context needs a protocol here. CLI projects
+  (constructor injection, no context) skip this entirely.
+- **Service-to-service dependencies** — recommended, not mandatory: referencing
+  the other service through a protocol keeps the coupling narrow.
+
+Gate classes get no protocols — nothing outside `inits` refers to them.
 
 ## Boundary vs core — what belongs here
 
@@ -31,8 +51,8 @@ Decide by what the code *does*:
 
 - It **crosses a boundary** (a data shape moving between layers) → it is a
   contract → `pacts`
-- It **enforces business rules** (aggregates, value objects, invariants) → it is
-  core → [`mills`](mills.md)
+- It **enforces business rules** (service logic, invariants) → it is core →
+  [`mills`](mills.md)
 
 DTOs stay in `pacts` even though they feel like domain objects. The repository
 protocols in `pacts` return them, so moving them to `mills` would make `pacts →
@@ -55,25 +75,40 @@ callbacks — with multiple unrelated duck-typed implementations.
 
 ## Slicing axis
 
-Start as a single `pacts.py` module. Promote to a package sliced by
-**subdomain**, then **bounded context**, as the layer grows — in lockstep with
-`mills`.
+Start as a single `pacts.py` module. When it promotes, `pacts` mirrors the
+**whole system** — every contract sits under the axis of the layer it serves.
+Place each contract by three questions, in order:
+
+1. **Tied to a subdomain?** → `pacts/{subdomain}.py` — DTOs, write TypedDicts,
+   domain errors, repository protocols. Splits to
+   `pacts/{subdomain}/{bounded_context}.py` in lockstep with `mills`.
+2. **Tied to a port?** → `pacts/{port}.py` — e.g. `pacts/db.py` for
+   `TransactionProtocol` and `DatabaseConstraintError`. The test: would the
+   contract survive a total change of business domain? Then it belongs to the
+   port.
+3. **About the wiring?** → a module mirroring the `inits` registry it types —
+   e.g. `pacts/services.py` for `ServicesProtocol`, mirroring
+   `inits/services.py`.
 
 ```text
 pacts.py                         # start here
 
-pacts/auth.py                    # promoted — all auth contracts in one file
+pacts/auth.py                    # subdomain — all auth contracts in one file
 pacts/billing.py
 pacts/billing/invoicing.py       # split again when billing grows fat
 pacts/billing/subscriptions.py
+pacts/db.py                      # port — TransactionProtocol
+pacts/services.py                # wiring — ServicesProtocol
 ```
 
-Split by **domain concern**, not by technical kind. These are wrong:
+Split by **domain concern, port, or wiring** — never by technical kind, and
+never into a grab-bag. These are wrong:
 
 ```text
 pacts/dtos.py          # wrong — technical grouping
 pacts/protocols.py     # wrong — technical grouping
 pacts/repos/           # wrong — technical grouping
+pacts/core.py          # wrong — a common/ bucket wearing a nicer name
 ```
 
 ## DTO requirements
@@ -85,10 +120,30 @@ Every DTO must be constructible from a store row or ORM instance, so that
 model_config = ConfigDict(from_attributes=True)
 ```
 
+## Designing repository methods
+
+Repo methods follow the needs — a method exists because a use case needs it,
+never because a query is possible. The rule: **parameters express variation
+within a use case; a different scope is a different method.**
+
+Listing the meetings of an event: parameters for facilitator, topic, and an
+attendance sort are fine — a user varies those within the screen. A parameter
+that switches events or includes meetings never accepted to the schedule is
+not a filter; it is a second use case, so it gets a second method. The method
+name carries the invariant, the parameters carry the variation. This guards
+against both failure modes: a method per filter combination, and a generic
+query object that lets gates compose arbitrary queries.
+
+Reporting and aggregation reads are the same rule: a named method returning a
+purpose-built DTO (which, per the requirement above, must be constructible
+from whatever row the query produces).
+
 ## Red flags
 
 - `pacts/dtos.py`, `pacts/protocols.py`, or `pacts/repos/` — split by subdomain,
   not kind
+- `pacts/core.py`, `pacts/common.py`, or similar — every contract has a
+  principled home under the subdomain / port / wiring axes
 - `pacts/` promoted to a package while `mills.py` is still flat — promote both together
 - A DTO that cannot be built from a store row or ORM instance — repositories
   cannot return it

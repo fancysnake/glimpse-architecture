@@ -10,5 +10,5 @@
     }
   },
   "globs": ["docs/**/*.md", "*.md"],
-  "ignores": ["site/**"]
+  "ignores": ["site/**", "review.md"]
 }

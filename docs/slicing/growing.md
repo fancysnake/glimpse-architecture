@@ -60,6 +60,8 @@ modules, and the `inits` namespaces.
 
 At 13 or more leaves, introduce a sub-bucket grouped by subdomain or bounded
 context. With 12 or fewer, stay flat. If the count later drops, flatten back.
+(No GLIMPSE project has crossed this threshold yet — treat the bucketing move
+as a prediction, not settled practice.)
 
 ## A folder needs at least 2 files to exist
 
@@ -90,8 +92,9 @@ Do **not** create suffixed siblings (`models_billing.py`). The baseline is
 **halve, don't shard, and arrange the parts to avoid circular imports.**
 
 The right grouping is adapter-specific. A `db` adapter's models often split by
-foreign-key dependency hierarchy or by aggregate, and its repositories by
-aggregate group. An external-API adapter may never need to split at all.
+foreign-key dependency hierarchy — the entities that change together — and its
+repositories along the same lines. An external-API adapter may never need to
+split at all.
 
 The [facade](../layers/links.md#the-facade) at
 `links/{port}/{adapter}/__init__.py` keeps the public import path stable across

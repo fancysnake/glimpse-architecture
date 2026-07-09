@@ -32,15 +32,24 @@ or a model, and never reaches a repository directly — not even for a single
 trivial read.
 
 ```python
-# gates/cli/argparse/proposals.py
-def show(context: RootRequestProtocol, pk: int) -> None:
-    proposal: ProposalDTO = context.services.proposals.get(pk)
-    print(proposal.title)
+# gates/web/django/proposals.py
+class ProposalDetailView(View):
+    request: RootRequest
+
+    def get(self, request: RootRequest, pk: int) -> HttpResponse:
+        proposal: ProposalDTO = request.services.proposals.get(pk)
+        ...
 ```
 
 Services are exposed as a flat namespace, wired in `inits/services.py`. If no
 service exists for what you need, create one — a mill in `mills`, a protocol in
 `pacts`, and a leaf in `inits/services.py` — before writing the gate.
+
+How the services *reach* the gate is per-port. On the web, middleware attaches
+them to the request. In a CLI there is no request — `inits` constructs the
+gate class and injects the mills into its constructor (see
+[inits](inits.md#composition-is-per-port)); the gate then uses what it was
+given.
 
 ## Entry points return DTOs, never models
 
@@ -53,12 +62,51 @@ Atomicity is a service concern. A gate that opens a transaction has taken on a
 decision that belongs in `mills`. See [pattern
 7](../patterns/index.md#7-multi-repo-writes-use-transactionatomic).
 
-## Context typing
+## Validation: gates own the format
 
-The entry-point context — the HTTP request, the CLI command context, whatever
-the port provides — is typed as `RootRequestProtocol` from `pacts`, not as the
-framework's concrete class. This keeps `gates` testable without a framework
-context and enforces that only the protocol-defined interface is used.
+**Gates validate format, mills validate meaning.** A gate checks that input
+parses — an email, an int, a date. Whether the input makes business sense —
+"email or username required", seat limits — is a mill's job. A form whose
+clean methods grow business rules is a gate leaking into `mills`.
+
+## Errors are handled at the call-site
+
+Mills raise coarse domain errors from `pacts`; the gate wraps the service call
+and decides what the error means *for that screen* — a message, a fallback, a
+redirect. There is no central error-to-status mapping.
+
+```python
+try:
+    event = self.request.services.events.read_by_slug(slug, sphere_id)
+except NotFoundError:
+    messages.error(self.request, _("Event not found."))
+    return {}, None
+```
+
+## Permissions: gates while trivial, mills when they mean something
+
+Checks like "is authenticated" or "is event manager" are near-format checks on
+the request and live in gates. A permission system that encodes business rules
+— who may do what, under which conditions — is meaning, and belongs in a mill.
+The threshold, not the layer, is the rule.
+
+## Context typing (web)
+
+A web gate types the request as a **typing-only subclass** of the framework's
+request class, defined inside the adapter — never instantiated, mutated onto
+the real request by the `inits` middleware:
+
+```python
+# gates/web/django/entities.py
+class RootRequest(HttpRequest):
+    services: ServicesProtocol
+```
+
+`ServicesProtocol` comes from `pacts` (see
+[pacts](pacts.md#protocols-exist-where-a-boundary-needs-them)); the subclass
+stays gate-local because it imports the framework. Class-based views annotate
+`request: RootRequest` at class level and in method signatures. CLI gates have
+no context at all — they receive their dependencies at construction.
 
 ## Slicing axis
 
@@ -80,6 +128,8 @@ gates/web/flask/billing/invoices.py    # handlers for invoices context in billin
 
 - A gate importing ORM models or repository classes directly — call a service
 - A gate opening a transaction — that is a service concern
+- Business rules in form validation — gates check format; meaning belongs in
+  mills
 - A gate returning ORM instances to templates — return DTOs only
 - `gates` importing `specs` — business invariants are for mills only
 - `gates/mills/...` or any non-port axis at the top level of gates

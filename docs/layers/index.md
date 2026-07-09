@@ -34,12 +34,17 @@ framework shell outside the import rules.
 └──────────────────────────┘
 ```
 
-Arrows point in the direction of dependency (A → B means A imports B), with two
-exceptions. `edges → inits` is configuration, not import — settings name the
-middleware by dotted string, and nothing ever imports `edges`. `inits → gates`
-is injection, not import — `inits` attaches the container to the entry-point
-context; it imports `links` and `mills`, never `gates`. Neither `gates` nor
-`links` imports the other — `inits` is the seam between them.
+Arrows point in the direction of dependency (A → B means A imports B), with
+one exception: `edges → inits` is configuration, not import — settings name
+the middleware by dotted string, and nothing ever imports `edges`.
+
+`inits → gates` is port-dependent. `inits` is the composition root and the
+only layer that may import `gates`. Where the framework dispatches to entry
+points itself (web), `inits` never needs to — middleware attaches the
+container to the request, and the arrow is injection, not import. Where
+nothing dispatches (CLI), `inits` imports the gate classes and composes them
+directly. Neither `gates` nor `links` imports the other — `inits` is the seam
+between them.
 
 `specs` sits between `mills` and `pacts` and has exactly one consumer. `links`,
 `gates`, and `inits` must never import it — a constant they need is either
@@ -53,14 +58,16 @@ configuration (`edges`) or a contract (`pacts`).
 | [specs](specs.md) | Business invariants (pure constants, no IO) | pacts | mills only |
 | [mills](mills.md) | Business logic and services | pacts + specs | gates, inits |
 | [links](links.md) | Repositories, external clients | pacts + ORM | inits |
-| [gates](gates.md) | Views, forms, URLs, templatetags, CLI commands | pacts + mills | nothing |
-| [inits](inits.md) | DI container, middleware — wires links into gates | pacts + mills + links + framework glue | nothing — `edges` names it in configuration |
+| [gates](gates.md) | Views, forms, URLs, templatetags, CLI commands | pacts + mills | inits (CLI composition only) |
+| [inits](inits.md) | DI container, middleware — wires links into gates | pacts + mills + links (+ gates in CLI) + framework glue | nothing — `edges` names it in configuration |
 | [edges](edges.md) | settings, wsgi/asgi, manage.py | outside GLIMPSE | nothing |
 
 ## Package or module?
 
 `pacts`, `specs`, and `mills` are sliced by subdomain — and at the start of a
-project you do not yet know your subdomains. `inits` splits by what it wires
+project you do not yet know your subdomains. (`pacts` also holds port and
+wiring contracts in their own modules — see the [placement
+algorithm](pacts.md#slicing-axis).) `inits` splits by what it wires
 (`repositories.py`, `services.py`), never by subdomain. All four begin as single
 modules (`mills.py`) and are promoted to packages (`mills/`) when they earn it.
 

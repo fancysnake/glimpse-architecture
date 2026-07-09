@@ -16,11 +16,8 @@ subdomain is normal. It is not a boundary violation, and wrapping it in a
 `billing`-owned service that does nothing but forward the call buys nothing.
 
 The smell to watch for is duplicated *behavior* across subdomains — the same
-rule enforced in two places, drifting apart. The fix for that is one of:
-
-- an **aggregate invariant**, enforced at construction or at state transition,
-  so the rule cannot be skipped
-- a **shared lower-level mill function** that both subdomains call
+rule enforced in two places, drifting apart. The fix is a **shared lower-level
+mill function** that both subdomains call.
 
 The fix is never a blanket rule against cross-subdomain repository reads. That
 rule produces a layer of pass-through services and hides nothing.

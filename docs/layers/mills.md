@@ -13,22 +13,46 @@ and reaches data through the repository protocols defined there.
 | **Depends on** | pacts, specs |
 | **Depended on by** | gates, inits |
 
-`mills` must never import an ORM, an HTTP layer, or a CLI parser — no Django, no
-SQLAlchemy, no Flask. If a service needs data access, it receives repository
-protocols via constructor injection.
+"Framework-free" is about **side effects**, not package names. An import is
+forbidden in `mills` if it does IO, touches global state, or owns control flow
+— no ORM, no HTTP machinery, no CLI parser, no settings access. Pure
+computation is fine wherever it comes from: `django.utils.text.slugify` is a
+string function that happens to live in a framework namespace. The test: could
+you copy the function's body into your project and change nothing about your
+design? How strictly to *enforce* the line is a per-project choice — see the
+[Import Linter guide](../guides/import-linter.md#the-mills-framework-contract).
+
+If a service needs data access, it receives repository protocols via
+constructor injection.
 
 ## What it contains
 
 - Service classes implementing business use cases
-- Aggregates, value objects, and the invariants they enforce
-- Domain logic (validation, computation, orchestration)
+- Business invariants, enforced in service code
+- Domain logic (semantic validation, computation, orchestration)
 - Nothing that touches HTTP, templates, forms, ORM models, or framework internals
+
+GLIMPSE does not prescribe DDD tactical patterns — no aggregate or value-object
+classes are expected. Data moves as DTOs and write TypedDicts from `pacts`;
+the rules live in the services. DDD's *strategic* vocabulary (subdomains,
+bounded contexts) survives as a slicing heuristic — see
+[slicing](../slicing/index.md).
+
+## Validation: mills own the meaning
+
+**Gates validate format, mills validate meaning.** A gate checks that input
+parses — an email, an int, a date. A mill checks that it makes sense — "email
+or username required", "no more than `MAX_SESSION_SEATS` seats" (a `specs`
+constant, which only mills may read). The line is not single-field versus
+cross-field; it is parse versus semantics.
 
 ## Services take the protocols they use
 
 A service declares the two or three repository protocols it actually needs, plus
-a `TransactionProtocol` if it writes. It does not take a whole Unit of Work —
-that hands the service a surface far wider than its job.
+a `TransactionProtocol` if it writes. With an ambient ORM (Django), it does not
+take a whole Unit of Work — that hands the service a surface far wider than its
+job. (With a session-based ORM like SQLAlchemy, the session already *is* a unit
+of work; injecting one there is idiomatic, not a violation.)
 
 ```python
 class InvoiceService:
@@ -61,8 +85,8 @@ Decide by what the code *does*:
 
 - It **crosses a boundary** (a data shape moving between layers) → it is a
   contract → `pacts`
-- It **enforces business rules** (aggregates, value objects, invariants) → it is
-  core → `mills`
+- It **enforces business rules** (service logic, invariants) → it is core →
+  `mills`
 
 DTOs stay in `pacts` even though they feel like domain objects — see
 [pacts](pacts.md) for the circular-import argument.
@@ -85,10 +109,10 @@ mills/billing/subscriptions.py
 
 ## Red flags
 
-- `mills` importing from an ORM or any framework — absolute violation
+- `mills` importing anything with side effects — ORM, HTTP machinery, settings
+  access — absolute violation
 - A service taking a whole UoW instead of the specific protocols it uses
+  (ambient-ORM projects)
 - `mills/web/...` or any port axis — `mills` has no delivery-mechanism axis
-- `mills/{entity}.py` holding context-specific write logic — entity-level mills
-  are only for entity-level invariants
 - `mills` sliced differently than `pacts` — axes must mirror
 - `mills/` promoted to a package while `pacts.py` is still flat — promote both together

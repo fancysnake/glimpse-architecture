@@ -15,14 +15,47 @@ way it deserves. Testing them the same way throws that separation away.
 | `mills` — pure-logic core | **unit** | Mock at the highest level; assert every mock call |
 | `links`, `gates`, adapters, templates — IO-bearing boundary | **integration** | Mock at the lowest level, or not at all; assert side effects |
 
-`mills` has no IO by construction. A unit test constructs the service with fake
-repositories satisfying the protocols from `pacts`, exercises the rule, and
-asserts on the calls. If a mill test needs a live database, the mill has leaked
-infrastructure — fix the mill, not the test.
+## Where tests live
+
+A repo-root `tests/` tree, split by test type — deliberately *not* mirroring
+the code:
+
+```text
+tests/
+├── unit/            # mills, plus pure helpers from any layer
+└── integration/     # gates (by port + subdomain), links (by port + adapter)
+```
+
+`tests/unit/` is organised by convenience — group by submodule or layer only
+when volume demands it. The strict symmetry rules of the source tree do not
+apply here.
+
+## Unit tests: mills
+
+`mills` has no IO by construction. The test constructs the service with
+`MagicMock`s standing in for the repository protocols, plus prepared data — or
+a mock for the data too, when only one field of a ten-field DTO matters. The
+assertions are on **how the mocks were called**: besides the return value,
+repository calls are the mill's entire output surface. `TransactionProtocol`
+needs no special stub — `MagicMock` speaks the context-manager protocol.
+
+If a mill test needs a live database, the mill has leaked infrastructure — fix
+the mill, not the test.
+
+## Integration tests: gates and links
 
 `links` and `gates` exist to touch the outside world. Testing a repository
 against a mocked ORM asserts that your mock behaves like your mock. Run it
 against real infrastructure and assert the side effect.
+
+A gate integration test is a **full-request test**: the framework's test
+client in, the response out — and the assertions are exhaustive, not
+cherry-picked. Two utilities make this cheap:
+
+- an assert-full-response helper that checks *every* field of the response —
+  context data, redirect URL, status — so an unasserted change fails loudly
+- a strict-template hook that fails any test in which a template references an
+  unknown variable
 
 ## Coverage follows the layer
 

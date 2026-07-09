@@ -16,9 +16,12 @@ layers. Understanding these terms is necessary to place any new file correctly.
 **Adapter**
 : The specific technology implementing a port.
 : Examples: `postgres`, `sqlite`, `argparse`, `stripe`, `sendgrid`
-: One port can have multiple adapters. `db/postgres` and `db/sqlite` are
-  interchangeable implementations of the same port, as are `payment_api/stripe`
-  and `payment_api/paypal`.
+: One port can have multiple adapters — usually **coexisting**, not
+  interchangeable. `payment_api/stripe` and `payment_api/paypal` are both
+  wired and both live; which one handles a given payment is a business
+  decision made in a mill, through the protocols it holds. Genuine
+  substitution (`db/postgres` vs `db/sqlite`) is the rarer case: one adapter
+  wired per deployment, chosen in `inits`.
 : One technology can serve multiple ports. A full-stack framework shipping both
   an ORM and a request layer appears as `db/{framework}` and `web/{framework}` —
   two separate adapters that share nothing but a name.
@@ -34,6 +37,9 @@ layers. Understanding these terms is necessary to place any new file correctly.
 : Examples: `auth`, `billing`, `content`, `notifications`
 : A subdomain groups everything related to one business concern. It is the
   primary slicing axis for `pacts`, `mills`, and `specs`.
+: Subdomains are a heuristic borrowed from DDD, not doctrine — GLIMPSE does
+  not prescribe DDD. If another axis fits a project better (the pages a module
+  supports, say), slice by that instead; the layer rules don't change.
 
 **Bounded context**
 : A responsibility boundary with its own ubiquitous language.
@@ -61,8 +67,8 @@ Before choosing a layer, decide what the code *does*:
 
 - It **crosses a boundary** — a data shape moving between layers → it is a
   contract → `pacts`
-- It **enforces business rules** — aggregates, value objects, invariants → it is
-  core → `mills`
+- It **enforces business rules** — service logic, invariants → it is core →
+  `mills`
 
 The classic case is DTOs: they feel like domain objects but stay in `pacts` —
 see [pacts](../layers/pacts.md) for the circular-import argument.
@@ -84,8 +90,12 @@ specs/{subdomain}.py
 ```
 
 Each `pacts` module holds all boundary contracts for that subdomain or context —
-DTOs, write TypedDicts, protocols, errors. Split by domain concern, never by
-technical kind.
+DTOs, write TypedDicts, repository protocols, errors. Split by domain concern,
+never by technical kind. Contracts that belong to no subdomain follow the axis
+of the layer they serve — `pacts/{port}.py` for port machinery
+(`TransactionProtocol`), a module mirroring the `inits` registry for wiring
+contracts (`pacts/services.py`). See the [placement
+algorithm](../layers/pacts.md#slicing-axis).
 
 `pacts` and `mills` must mirror each other. If `pacts` splits a subdomain into
 contexts, `mills` must do the same — and vice versa.
