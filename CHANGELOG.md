@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning].
 ### Added
 
 - Hexagonal-architecture translation table in Why GLIMPSE
-- `pacts` placement algorithm — contracts slice by subdomain, port, or wiring
+- `pacts` placement algorithm — contracts slice by noun, port, or wiring
   (`pacts/db.py`, `pacts/services.py`); `pacts/core.py` named a red flag
 - `TransactionProtocol` definition (`atomic()` + `savepoint()`) with
   savepoint semantics and store-exception translation; implementation
@@ -34,6 +34,16 @@ and this project adheres to [Semantic Versioning].
 
 ### Changed
 
+- Slicing vocabulary replaced: **noun** and **verb** instead of subdomain and
+  bounded context, and **page** as the `gates` axis. Nouns are named after the
+  thing they are, with no prescribed plurality; a verb cut must name a real
+  activity
+- Gates mirror the interface, mills mirror the domain — the two trees are not
+  expected to match, and the symmetry rule binds `pacts` and `mills` only
+- `inits` slicing restated: modules are named after the type of object they
+  wire (`repositories.py`, `services.py`, `middleware.py`), never after a
+  noun or a port
+- Layer-promotion rationale restated as "on day one you have `mills.py`"
 - "Framework-free" mills redefined by side effects, not package names — pure
   framework helpers allowed; enforcement level is a per-project choice
 - DDD demoted to a slicing heuristic: no aggregates or value objects; data
@@ -57,6 +67,8 @@ and this project adheres to [Semantic Versioning].
 - Entity-level mills red flag — a leftover concept
 - Aggregate-invariant fix from dependency direction — the fix is a shared
   lower-level mill function
+- DDD's strategic vocabulary — subdomains and bounded contexts are gone from
+  the slicing rules entirely, replaced by nouns and verbs
 
 ## [0.1.0] - 2026-07-09
 
