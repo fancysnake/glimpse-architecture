@@ -110,19 +110,27 @@ no context at all — they receive their dependencies at construction.
 
 ## Slicing axis
 
-**gates** is sliced by **port** → **adapter** → **subdomain** (and optionally
-bounded context).
+**gates** is sliced by **port** → **adapter** → **page**.
 
 The port and adapter directories exist from day one — you always know which
-delivery mechanism you are building. Only the subdomain level waits until there
-is a subdomain to name.
+delivery mechanism you are building. Below them, `gates` mirrors the shape of
+the interface itself: page group and page for a web app, a command for a CLI, a
+view for a TUI, a tool for MCP. Whatever grouping the interface already has is
+the grouping the files get.
 
 ```text
-gates/cli/argparse.py                  # start here — one adapter, no subdomains yet
-gates/cli/argparse/proposals.py        # CLI commands for proposals subdomain
-gates/web/flask/proposals.py           # HTTP handlers for the same subdomain
-gates/web/flask/billing/invoices.py    # handlers for invoices context in billing
+gates/cli/argparse.py                  # start here — one adapter, one page
+gates/cli/argparse/export.py           # a CLI's pages are its commands
+gates/web/flask/dashboard.py           # one page plus its action handlers
+gates/web/flask/checkout/payment.py    # page group / page
 ```
+
+**Gates mirror the interface; mills mirror the domain.** The two trees are not
+expected to match, and there is no symmetry rule between them — a single page
+often calls services from several nouns, and one noun often surfaces on pages
+scattered across the sitemap. Naming a gates directory after a noun when no
+such page exists imports the domain tree into the interface, where it does not
+belong.
 
 ## Red flags
 
@@ -133,4 +141,6 @@ gates/web/flask/billing/invoices.py    # handlers for invoices context in billin
 - A gate returning ORM instances to templates — return DTOs only
 - `gates` importing `specs` — business invariants are for mills only
 - `gates/mills/...` or any non-port axis at the top level of gates
+- A noun axis below the adapter when the interface has no such page — gates
+  mirror the interface, not the domain
 - A single `gates.py` file — the `{port}/{adapter}` axis is known up front

@@ -35,18 +35,18 @@ in `pacts`.
 
 ## Slicing axis
 
-Start as a single `specs.py` module. Promote to a package sliced by
-**subdomain** when it earns it.
+Start as a single `specs.py` module. Promote to a package sliced by **noun**
+when it earns it.
 
 ```text
 specs.py                 # start here
 
-specs/billing.py         # after promotion
-specs/auth.py
-specs/content.py
+specs/invoices.py        # after promotion
+specs/users.py
+specs/events.py
 ```
 
-`specs` rarely grows large enough to split by bounded context, but the same rule
+`specs` rarely grows large enough to cut a noun into verbs, but the same rule
 applies if it does. See [Growing rules](../slicing/growing.md).
 
 ## Red flags

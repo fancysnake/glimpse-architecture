@@ -77,11 +77,13 @@ callbacks — with multiple unrelated duck-typed implementations.
 
 Start as a single `pacts.py` module. When it promotes, `pacts` mirrors the
 **whole system** — every contract sits under the axis of the layer it serves.
-Place each contract by three questions, in order:
+`gates` is the exception that proves it: gate classes get no protocols, so the
+page axis never reaches `pacts`. Place each contract by three questions, in
+order:
 
-1. **Tied to a subdomain?** → `pacts/{subdomain}.py` — DTOs, write TypedDicts,
-   domain errors, repository protocols. Splits to
-   `pacts/{subdomain}/{bounded_context}.py` in lockstep with `mills`.
+1. **Tied to a noun?** → `pacts/{noun}.py` — DTOs, write TypedDicts, domain
+   errors, repository protocols. Cuts into `pacts/{noun}/{verb}.py` in
+   lockstep with `mills`.
 2. **Tied to a port?** → `pacts/{port}.py` — e.g. `pacts/db.py` for
    `TransactionProtocol` and `DatabaseConstraintError`. The test: would the
    contract survive a total change of business domain? Then it belongs to the
@@ -93,10 +95,10 @@ Place each contract by three questions, in order:
 ```text
 pacts.py                         # start here
 
-pacts/auth.py                    # subdomain — all auth contracts in one file
-pacts/billing.py
-pacts/billing/invoicing.py       # split again when billing grows fat
-pacts/billing/subscriptions.py
+pacts/users.py                   # noun — all user contracts in one file
+pacts/invoices.py
+pacts/invoices/issue.py          # cut by verb when invoices grows fat
+pacts/invoices/refund.py
 pacts/db.py                      # port — TransactionProtocol
 pacts/services.py                # wiring — ServicesProtocol
 ```
@@ -140,10 +142,11 @@ from whatever row the query produces).
 
 ## Red flags
 
-- `pacts/dtos.py`, `pacts/protocols.py`, or `pacts/repos/` — split by subdomain,
+- `pacts/dtos.py`, `pacts/protocols.py`, or `pacts/repos/` — split by noun,
   not kind
 - `pacts/core.py`, `pacts/common.py`, or similar — every contract has a
-  principled home under the subdomain / port / wiring axes
+  principled home under the noun / port / wiring axes
+- A verb cut that names no activity — `pacts/invoices/manage.py`
 - `pacts/` promoted to a package while `mills.py` is still flat — promote both together
 - A DTO that cannot be built from a store row or ORM instance — repositories
   cannot return it

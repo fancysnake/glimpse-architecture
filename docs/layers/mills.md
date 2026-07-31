@@ -34,8 +34,8 @@ constructor injection.
 
 GLIMPSE does not prescribe DDD tactical patterns — no aggregate or value-object
 classes are expected. Data moves as DTOs and write TypedDicts from `pacts`;
-the rules live in the services. DDD's *strategic* vocabulary (subdomains,
-bounded contexts) survives as a slicing heuristic — see
+the rules live in the services. The slicing axes are GLIMPSE's own — nouns and
+verbs, not subdomains and bounded contexts — see
 [slicing](../slicing/index.md).
 
 ## Validation: mills own the meaning
@@ -93,18 +93,21 @@ DTOs stay in `pacts` even though they feel like domain objects — see
 
 ## Slicing axis
 
-Start as a single `mills.py` module. Promote to a package sliced by
-**subdomain**, then **bounded context**, as the layer grows. This axis must
-**mirror `pacts`** exactly — at every level, including whether it is a module or
-a package.
+Start as a single `mills.py` module. Promote to a package sliced by **noun**,
+then **verb**, as the layer grows. This axis must **mirror `pacts`** exactly —
+at every level, including whether it is a module or a package.
+
+`mills` mirrors the domain, not the interface. A verb cut names a real
+activity (`issue`, `refund`, `enroll`); if the only name you can find is
+`manage` or `misc`, the file is not too big yet.
 
 ```text
 mills.py                         # start here, alongside pacts.py
 
-mills/billing.py                 # promoted — pacts/ promotes at the same time
-mills/auth.py
-mills/billing/invoicing.py       # only after pacts/billing/invoicing.py exists
-mills/billing/subscriptions.py
+mills/invoices.py                # promoted — pacts/ promotes at the same time
+mills/users.py
+mills/invoices/issue.py          # only after pacts/invoices/issue.py exists
+mills/invoices/refund.py
 ```
 
 ## Red flags
@@ -114,5 +117,7 @@ mills/billing/subscriptions.py
 - A service taking a whole UoW instead of the specific protocols it uses
   (ambient-ORM projects)
 - `mills/web/...` or any port axis — `mills` has no delivery-mechanism axis
+- A page axis inside `mills` — gates mirror the interface, mills the domain
+- A catch-all verb module — `mills/invoices/manage.py`, `misc.py`
 - `mills` sliced differently than `pacts` — axes must mirror
 - `mills/` promoted to a package while `pacts.py` is still flat — promote both together

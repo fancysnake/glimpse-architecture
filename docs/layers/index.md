@@ -64,12 +64,13 @@ configuration (`edges`) or a contract (`pacts`).
 
 ## Package or module?
 
-`pacts`, `specs`, and `mills` are sliced by subdomain — and at the start of a
-project you do not yet know your subdomains. (`pacts` also holds port and
-wiring contracts in their own modules — see the [placement
-algorithm](pacts.md#slicing-axis).) `inits` splits by what it wires
-(`repositories.py`, `services.py`), never by subdomain. All four begin as single
-modules (`mills.py`) and are promoted to packages (`mills/`) when they earn it.
+`pacts`, `specs`, and `mills` are sliced by noun — and on day one you have one
+`mills.py` and no reason to plan further. (`pacts` also holds port and wiring
+contracts in their own modules — see the [placement
+algorithm](pacts.md#slicing-axis).) `inits` splits by the type of object it
+wires (`repositories.py`, `services.py`), never by noun. All four begin as
+single modules (`mills.py`) and are promoted to packages (`mills/`) when they
+earn it.
 
 `links` and `gates` are packages from day one. Their first axis is the **port**,
 and the port is knowable before a line of code is written: you know you are

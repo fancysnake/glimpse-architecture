@@ -140,17 +140,19 @@ never changes.
 ## Growing the registries
 
 Stay flat while a registry has ≤12 leaves. At 13 or more, introduce a sub-bucket
-grouped by subdomain or bounded context, and flatten back if the count drops. A
-bucket must hold at least two leaves before the folder exists. (No GLIMPSE
-project has crossed the threshold yet — the bucketed calling convention is a
-prediction, not practice.)
+grouped by noun or verb, and flatten back if the count drops. A bucket must
+hold at least two leaves before the folder exists. (No GLIMPSE project has
+crossed the threshold yet — the bucketed calling convention is a prediction,
+not practice.)
 
 See [Growing rules](../slicing/growing.md).
 
 ## Slicing axis
 
 Start as a single `inits.py` module holding both registries and the middleware.
-When it outgrows one file, it splits by **what it wires** — never by subdomain:
+When it outgrows one file, it splits by **the type of object it wires** — each
+module named after the kind of thing it holds, never after a noun and never
+after a port:
 
 ```text
 inits.py                 # start here
@@ -160,7 +162,7 @@ inits/services.py
 inits/middleware.py
 ```
 
-Subdomains appear only as sub-buckets *inside* a registry, once it crosses ~12
+Nouns appear only as sub-buckets *inside* a registry, once it crosses ~12
 leaves — see [Growing the registries](#growing-the-registries).
 
 ## Red flags
