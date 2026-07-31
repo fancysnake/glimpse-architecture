@@ -32,23 +32,33 @@ layers. Understanding these terms is necessary to place any new file correctly.
   `signer` for an API client.
 : Kinds are per-adapter. The `db` shape is not a universal template.
 
-**Subdomain**
-: A broad business area.
-: Examples: `auth`, `billing`, `content`, `notifications`
-: A subdomain groups everything related to one business concern. It is the
-  primary slicing axis for `pacts`, `mills`, and `specs`.
-: Subdomains are a heuristic borrowed from DDD, not doctrine — GLIMPSE does
-  not prescribe DDD. If another axis fits a project better (the pages a module
-  supports, say), slice by that instead; the layer rules don't change.
+**Noun**
+: A fat data cow — the model cluster everything else hangs off.
+: Examples: `invoices`, `customers`, `proposals`, `users`
+: The primary slicing axis for `pacts`, `mills`, and `specs`.
+: Plurality is not prescribed; it follows the noun. `events` are many, a
+  `panel` is one.
+: Nouns are GLIMPSE's own axis, not a DDD import. If another axis fits a
+  project better, slice by that instead; the layer rules don't change.
 
-**Bounded context**
-: A responsibility boundary with its own ubiquitous language.
-: Two bounded contexts can share a name (like `User`) and mean different things.
-: Bounded contexts nest inside subdomains. `billing` might contain `invoicing`
-  and `subscriptions` as separate contexts.
+**Verb**
+: An activity cut inside a noun.
+: Examples: `issue`, `refund`, `enroll`, `schedule`
+: A verb module holds the records and logic of actions, not first-class data.
+  Verbs nest inside nouns: `invoices` might cut into `issue` and `refund`.
+: No catch-all verbs. `manage`, `organize`, and `misc` name no activity — if
+  you cannot name a real one, the file is not too big yet.
+
+**Page**
+: What the user touches — the slicing axis for `gates`.
+: Examples: a page or page group for web, a command for a CLI, a view for a
+  TUI, a tool for MCP
+: Gates mirror the shape of the interface; mills mirror the domain. The two
+  need not line up, and forcing them to is how a sitemap ends up in `mills`.
 
 **Entity**
 : A persistence-level concept: the unit that a DTO and a repository wrap.
+: Narrower than a noun — one noun spans many entities.
 : Conceptual, **not a file-layout axis**. `links` slices by kind, so one
   `models.py` holds many entities' models. There is no
   `links/db/{adapter}/{entity}.py`.
@@ -56,8 +66,8 @@ layers. Understanding these terms is necessary to place any new file correctly.
 ## Hierarchy
 
 ```text
-subdomain
-└── bounded context
+noun
+└── verb
     └── entity
 ```
 
@@ -75,34 +85,35 @@ see [pacts](../layers/pacts.md) for the circular-import argument.
 
 ## Slicing rules by layer
 
-### pacts, mills, specs — by subdomain, then bounded context
+### pacts, mills, specs — by noun, then verb
 
 These start as single modules and become packages when they earn it. See
 [Growing rules](growing.md).
 
 ```text
-pacts.py                                  # start here
-pacts/{subdomain}.py                      # flat while subdomain is small
-pacts/{subdomain}/{bounded_context}.py    # split when subdomain grows
-mills/{subdomain}.py
-mills/{subdomain}/{bounded_context}.py
-specs/{subdomain}.py
+pacts.py                     # start here
+pacts/{noun}.py              # flat while the noun is small
+pacts/{noun}/{verb}.py       # cut by verb when the noun grows fat
+mills/{noun}.py
+mills/{noun}/{verb}.py
+specs/{noun}.py
 ```
 
-Each `pacts` module holds all boundary contracts for that subdomain or context —
+Each `pacts` module holds all boundary contracts for that noun or verb cut —
 DTOs, write TypedDicts, repository protocols, errors. Split by domain concern,
-never by technical kind. Contracts that belong to no subdomain follow the axis
-of the layer they serve — `pacts/{port}.py` for port machinery
+never by technical kind. Contracts that belong to no noun follow the axis of
+the layer they serve — `pacts/{port}.py` for port machinery
 (`TransactionProtocol`), a module mirroring the `inits` registry for wiring
 contracts (`pacts/services.py`). See the [placement
 algorithm](../layers/pacts.md#slicing-axis).
 
-`pacts` and `mills` must mirror each other. If `pacts` splits a subdomain into
-contexts, `mills` must do the same — and vice versa.
+`pacts` and `mills` must mirror each other. If `pacts` cuts a noun into verbs,
+`mills` must do the same — and vice versa.
 
-### inits — by what it wires
+### inits — by the type of object it wires
 
-`inits` starts as a single module and splits into its registries, never by subdomain:
+`inits` starts as a single module and splits into its registries. Each is
+named after the kind of object it holds, never after a noun:
 
 ```text
 inits.py                 # start here
@@ -111,7 +122,7 @@ inits/services.py
 inits/middleware.py
 ```
 
-Subdomain grouping appears only as sub-buckets inside a registry past ~12
+Noun grouping appears only as sub-buckets inside a registry past ~12
 leaves. See [inits](../layers/inits.md).
 
 ### links — port / adapter / kind
@@ -135,28 +146,32 @@ links/payment_api/stripe.py
 links/email/sendgrid.py
 ```
 
-### gates — port / adapter / subdomain
+### gates — port / adapter / page
 
-Packages from day one, for the same reason.
+Packages from day one, for the same reason. Below the adapter, `gates` follows
+the shape of the interface itself — whatever grouping that interface already
+has.
 
 ```text
-gates/{port}/{adapter}.py                 # flat while there is one subdomain
-gates/{port}/{adapter}/{subdomain}.py
-gates/{port}/{adapter}/{subdomain}/{bounded_context}.py
+gates/{port}/{adapter}.py                 # flat while there is one page
+gates/{port}/{adapter}/{page}.py
+gates/{port}/{adapter}/{page_group}/{page}.py
 ```
 
 Examples:
 
 ```text
 gates/cli/argparse.py
-gates/cli/argparse/reports.py
-gates/web/flask/proposals.py
-gates/web/flask/billing/invoices.py
+gates/cli/argparse/export.py           # a CLI's pages are its commands
+gates/web/flask/dashboard.py
+gates/web/flask/checkout/payment.py    # page group / page
 ```
 
 ## Symmetry rule
 
 `pacts/` and `mills/` must use the same slicing axis at every level. If
-`pacts/billing/` has `invoicing.py` and `subscriptions.py`, then
-`mills/billing/` must also have `invoicing.py` and `subscriptions.py`.
-Mismatched axes are a drift red flag.
+`pacts/invoices/` has `issue.py` and `refund.py`, then `mills/invoices/` must
+also have `issue.py` and `refund.py`. Mismatched axes are a drift red flag.
+
+The rule stops at those two layers. `gates` mirrors the interface and `links`
+slices by kind — neither is expected to line up with the noun/verb tree.
