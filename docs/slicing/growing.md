@@ -7,17 +7,17 @@ the case for itself.**
 
 Premature splitting creates churn, bloats the import graph, and makes the layout
 look complete before the requirements actually demand it. A directory tree that
-anticipates subdomains you have not discovered yet is a guess, and it will be
-wrong.
+anticipates nouns you have not discovered yet is a guess, and it will be wrong.
 
 None of the thresholds below is a hard line. All of them mean *watch for this*.
 
 ## A layer becomes a package when it earns it
 
-`pacts`, `specs`, and `mills` are sliced by subdomain, and on day one you do not
-know your subdomains. `inits` splits by what it wires — promotion means
-`repositories.py` + `services.py` (+ `middleware.py`), never
-`inits/{subdomain}.py`. Start each as a single module.
+On day one you have `mills.py` — one module, one noun's worth of logic, no
+plan for the rest. `pacts`, `specs`, and `mills` are sliced by noun, and the
+nouns arrive as the domain does. `inits` splits by the type of object it wires
+— promotion means `repositories.py` + `services.py` (+ `middleware.py`), never
+`inits/{noun}.py`. Start each as a single module.
 
 ```text
 pacts.py
@@ -30,7 +30,7 @@ Promote `mills.py` → `mills/` on any **one** of these:
 
 - it crosses ~1000 lines
 - two unrelated concerns inside it cause merge friction
-- a second subdomain genuinely exists — not one you expect, one you have
+- a second noun genuinely exists — not one you expect, one you have
 
 Not before.
 
@@ -55,18 +55,18 @@ not a verdict.
 
 ## ~12 public symbols per namespace level
 
-Applies to the repository registry, the services tree, `pacts` subdomain
-modules, and the `inits` namespaces.
+Applies to the repository registry, the services tree, `pacts` noun modules,
+and the `inits` namespaces.
 
-At 13 or more leaves, introduce a sub-bucket grouped by subdomain or bounded
-context. With 12 or fewer, stay flat. If the count later drops, flatten back.
-(No GLIMPSE project has crossed this threshold yet — treat the bucketing move
-as a prediction, not settled practice.)
+At 13 or more leaves, introduce a sub-bucket grouped by noun or verb. With 12
+or fewer, stay flat. If the count later drops, flatten back. (No GLIMPSE
+project has crossed this threshold yet — treat the bucketing move as a
+prediction, not settled practice.)
 
 ## A folder needs at least 2 files to exist
 
-Never create `inits/services/billing/invoicing/` for a single leaf. Never create
-`pacts/{subdomain}/{context}.py` while the subdomain has only one context.
+Never create `inits/services/invoices/issuing/` for a single leaf. Never create
+`pacts/{noun}/{verb}.py` while the noun has only one cut.
 
 If you find a speculative scaffold, reverse it.
 
@@ -81,14 +81,14 @@ links/db/postgres/
 ├── __init__.py          # facade — public import path unchanged
 ├── models/
 │   ├── __init__.py
-│   ├── billing.py
+│   ├── invoices.py
 │   └── identity.py
 └── repositories/
     ├── __init__.py
     └── ...
 ```
 
-Do **not** create suffixed siblings (`models_billing.py`). The baseline is
+Do **not** create suffixed siblings (`models_invoices.py`). The baseline is
 **halve, don't shard, and arrange the parts to avoid circular imports.**
 
 The right grouping is adapter-specific. A `db` adapter's models often split by
