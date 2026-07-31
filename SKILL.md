@@ -1,6 +1,13 @@
 ---
 name: glimpse
-description: GLIMPSE Architecture Reference — layer responsibilities, slicing rules, growing rules, import boundaries, patterns, and drift red flags.
+description: >-
+  GLIMPSE architecture rules for Python projects. Load before creating,
+  moving, or reviewing anything under pacts, specs, mills, links, gates, or
+  inits: services, repositories, DTOs, protocols, entry points, DI wiring.
+  Covers layer import rules, file layout and slicing (noun, verb, page, port,
+  adapter, kind), the __init__.py re-export policy, growth thresholds,
+  required patterns, and drift red flags. Also use when deciding where new
+  code goes or which test type a layer needs.
 ---
 
 # GLIMPSE Architecture Reference
@@ -8,12 +15,12 @@ description: GLIMPSE Architecture Reference — layer responsibilities, slicing 
 ## Layers
 
 ```text
-gates   Entry points: request handlers, forms, routing, CLI commands. pacts + mills.
-links   Repositories, external clients. pacts + ORM / driver / SDK.
-inits   DI container, middleware. Wires links into gates. Only layer that may import gates.
-mills   Business logic, services. Depends on pacts + specs. No side-effect imports.
 pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
 specs   Business invariants (pure constants, no IO). Only for mills.
+mills   Business logic, services. Depends on pacts + specs. No side-effect imports.
+links   Repositories, external clients. pacts + ORM / driver / SDK.
+gates   Entry points: request handlers, forms, routing, CLI commands. pacts + mills.
+inits   DI container, middleware. Wires links into gates. Only layer that may import gates.
 edges   Settings, wsgi, manage.py. Outside GLIMPSE; optional (CLI projects skip it).
 ```
 
@@ -40,17 +47,17 @@ from — `django.utils.text.slugify` qualifies. Enforcement level (ban package /
 review-guarded / ban effectful subtrees) is a per-project choice.
 
 **No DDD tactical patterns.** GLIMPSE has no aggregates or value objects —
-data moves as DTOs and write TypedDicts; invariants live in service code.
-Subdomains/bounded contexts are a borrowed slicing heuristic, not doctrine —
-slice by another axis if it fits the project better.
+data moves as DTOs and write TypedDicts; invariants live in service code. The
+slicing axes are GLIMPSE's own — noun, verb, page — not DDD's subdomains and
+bounded contexts. Slice by another axis if it fits the project better.
 
 ## File layout
 
 **`pacts`, `specs`, `mills`, `inits` start as single modules.** The first three
-are sliced by subdomain, and at the start of a project you do not yet know your
-subdomains; `inits` splits by what it wires (`repositories.py`, `services.py`),
-never by subdomain. Begin with `mills.py`; promote to `mills/` when it earns it
-(see **Growing rules**).
+are sliced by noun, and on day one you have one `mills.py` — don't plan further
+ahead; `inits` splits by the type of object it wires (`repositories.py`,
+`services.py`), never by noun. Begin with `mills.py`; promote to `mills/` when
+it earns it (see **Growing rules**).
 
 **`links` and `gates` are packages from day one.** Their first axis is the port,
 and the port is knowable before a line is written — you know you are building a
@@ -67,14 +74,14 @@ gates/{port}/{adapter}.py                   # e.g. gates/cli/argparse.py
 links/{port}/{adapter}.py                   # e.g. links/db/sqlite.py
 
 # Grown project
-pacts/{subdomain}.py                    # or pacts/{subdomain}/{context}.py
+pacts/{noun}.py                         # or pacts/{noun}/{verb}.py
 pacts/{port}.py                         # port machinery (e.g. pacts/db.py)
 pacts/services.py                       # wiring contracts, mirrors inits
-mills/{subdomain}.py                    # or mills/{subdomain}/{context}.py
-specs/{subdomain}.py
-inits/repositories.py                   # inits splits by what it wires, never by subdomain
+mills/{noun}.py                         # or mills/{noun}/{verb}.py
+specs/{noun}.py
+inits/repositories.py                   # inits splits by the type of object it wires
 inits/services.py
-gates/{port}/{adapter}/{subdomain}.py   # or .../{subdomain}/{context}/...
+gates/{port}/{adapter}/{page}.py        # or .../{page_group}/{page}.py
 links/{port}/{adapter}/{kind}.py            # while small (models.py, repositories.py)
 links/{port}/{adapter}/{kind}/{module}.py   # when {kind} crosses threshold
 links/{port}/{adapter}/__init__.py          # facade — re-exports the public surface
@@ -96,38 +103,48 @@ line-length pressure, or a pre-existing legacy facade. It is not the default.
   `db`, `payment_api`, `email`
 - **Adapter** — specific technology implementing a port: `postgres`, `sqlite`,
   `argparse`, `stripe`, `sendgrid`. One port can have multiple adapters.
-- **Subdomain** — broad business area (`auth`, `billing`, `content`)
-- **Bounded context** — responsibility boundary with its own ubiquitous
-  language. Two contexts can share `User` and mean different things.
+- **Noun** — a fat data cow: the model cluster everything else hangs off
+  (`invoices`, `customers`, `proposals`, `users`). The slicing axis for pacts,
+  mills, and specs. Plurality is not prescribed — it follows the noun
+  (`events` are many, a `panel` is one).
+- **Verb** — an activity cut inside a noun (`issue`, `refund`, `enroll`,
+  `schedule`). A verb module holds the records and logic of actions, not
+  first-class data. No catch-all verbs (`manage`, `organize`): a cut must name
+  a real activity — if you can't name one, the file isn't too big yet.
+- **Page** — gates' slicing axis: what the user touches. Gates mirror the
+  shape of the interface itself — page group / page or page / subpage for web,
+  a command for a CLI, a view or command for a TUI, a tool for MCP. Gates
+  mirror the interface; mills mirror the domain.
 - **Entity** — persistence-level concept: the unit a DTO + repository wraps.
-  Conceptual, not a file-layout axis: `links` slices by **kind** (per-adapter —
-  e.g. `models` / `repositories` for a `db` adapter), not by entity.
+  Narrower than a noun — one noun spans many entities. Conceptual, not a
+  file-layout axis: `links` slices by **kind** (per-adapter — e.g. `models` /
+  `repositories` for a `db` adapter), not by entity.
 
-Subdomain contains bounded contexts. Bounded context depends on entities.
+A noun contains verb cuts. A verb cut depends on entities.
 
 ## Slicing rules
 
-**pacts, mills, specs — by subdomain, then bounded context. inits — by what
-it wires.**
+**pacts, mills, specs — by noun, then verb. inits — by the type of object it
+wires.**
 
 ```text
-pacts/{subdomain}.py                    # flat while subdomain is small
-pacts/{subdomain}/{bounded_context}.py  # split when subdomain grows fat
-mills/{subdomain}.py
-mills/{subdomain}/{bounded_context}.py
-specs/{subdomain}.py
-inits/repositories.py                   # never inits/{subdomain}.py
+pacts/{noun}.py             # flat while the noun is small
+pacts/{noun}/{verb}.py      # cut by verb when the noun grows fat
+mills/{noun}.py
+mills/{noun}/{verb}.py
+specs/{noun}.py
+inits/repositories.py       # never inits/{noun}.py
 inits/services.py
 ```
 
-Each pacts module holds all boundary contracts for that subdomain/context:
+Each pacts module holds all boundary contracts for that noun or verb cut:
 DTOs, write TypedDicts, repository protocols, errors. Split by domain concern,
 not by technical kind — no `pacts/dtos.py`, `pacts/protocols.py`, or
 `pacts/repos/` directories, and never a `pacts/core.py` or `common` bucket.
 
 **pacts placement algorithm** — pacts mirrors the whole system; place each
-contract by three questions, in order: (1) tied to a subdomain? →
-`pacts/{subdomain}.py` (DTOs, write dicts, domain errors, repo protocols);
+contract by three questions, in order: (1) tied to a noun? →
+`pacts/{noun}.py` (DTOs, write dicts, domain errors, repo protocols);
 (2) tied to a port? → `pacts/{port}.py` (e.g. `pacts/db.py` for
 `TransactionProtocol` — test: would it survive a total change of business
 domain?); (3) about the wiring? → mirror the inits registry
@@ -159,7 +176,7 @@ by facilitator or topic: parameters. Switching events or including
 never-accepted meetings: a second use case → a second method. No generic
 query objects through the protocol.
 
-**links — `{port}/{adapter}/{kind}`. gates — `{port}/{adapter}/{subdomain}`.**
+**links — `{port}/{adapter}/{kind}`. gates — `{port}/{adapter}/{page}`.**
 
 ```text
 # Smallest — the adapter is one module
@@ -184,9 +201,9 @@ links/{port}/{adapter}/
         part1.py
         part2.py
 
-gates/cli/argparse.py               # flat while there is one subdomain
-gates/cli/argparse/{subdomain}.py   # or .../{subdomain}/{context}/...
-gates/web/{adapter}/{subdomain}.py
+gates/cli/argparse.py               # flat while there is one page
+gates/cli/argparse/{command}.py     # a CLI's pages are its commands
+gates/web/{adapter}/{page}.py       # or .../{page_group}/{page}.py
 ```
 
 The `kind` axis and the split philosophy are per-adapter — a `db` adapter is
@@ -211,7 +228,7 @@ appears as `db/{framework}` and `web/{framework}` — two separate adapters that
 share nothing but a name.
 
 **Symmetry rule:** `pacts/` ↔ `mills/` must mirror each other — both sliced by
-subdomain/context. If one splits a subdomain into contexts, the other must too.
+noun, then verb. If one cuts a noun into verbs, the other must too.
 
 ## Growing rules
 
@@ -225,8 +242,8 @@ Concrete thresholds — none is a hard line, all are "watch for this":
 - **A layer becomes a package when it earns it.** `pacts`, `specs`, `mills`, and
   `inits` start as single modules. Promote `mills.py` → `mills/` on any one of:
   it crosses ~1000 lines, two unrelated concerns in it cause merge friction, or
-  a second subdomain genuinely exists. Not before. `inits` promotes into
-  `repositories.py` / `services.py` (+ `middleware.py`), never subdomain files.
+  a second noun genuinely exists. Not before. `inits` promotes into
+  `repositories.py` / `services.py` (+ `middleware.py`), never noun files.
   `links` and `gates` are packages from the start — their port axis is known up
   front.
 - **~1000 lines per file** — split a file when it crosses this and the two
@@ -234,12 +251,12 @@ Concrete thresholds — none is a hard line, all are "watch for this":
   holding one tightly coupled service is fine; a 600-line file holding three
   independent services is not.
 - **~12 public symbols per namespace level** — applies to repository
-  registries, the services tree, pacts subdomain modules, and the inits
-  namespaces. At 13+ leaves, introduce a sub-bucket grouped by subdomain or
-  bounded context. With ≤12, stay flat.
+  registries, the services tree, pacts noun modules, and the inits namespaces.
+  At 13+ leaves, introduce a sub-bucket grouped by noun or verb. With ≤12,
+  stay flat.
 - **Folder must contain at least 2 files before it exists.** Never create
-  `inits/services/billing/invoicing/` for a single leaf. Never create
-  `pacts/{subdomain}/{context}.py` while the subdomain has only one context.
+  `inits/services/invoices/issuing/` for a single leaf. Never create
+  `pacts/{noun}/{verb}.py` while the noun has only one cut.
   Reverse the speculative scaffold; flatten back when the leaf count drops.
 - **Split links by kind first.** Default: one file per kind. When a kind
   crosses ~1000 lines, **promote it to a package** and split into submodules
@@ -322,11 +339,11 @@ hatches, not invitations.
 
 ## Dependency direction
 
-**Cross-subdomain access is fine.** Repos cross subdomains freely — data access
-is not behavior. An entry point in one subdomain reading another subdomain's
-users is normal, not a boundary violation. The smell to watch is duplicated
-*behavior* across subdomains; the fix is a shared lower-level mill function
-that both call, not a rule against cross-subdomain repo reads.
+**Cross-noun access is fine.** Repos cross nouns freely — data access is not
+behavior. An entry point on one noun's turf reading another noun's data is
+normal, not a boundary violation. The smell to watch is duplicated *behavior*
+across nouns; the fix is a shared lower-level mill function that both call,
+not a rule against cross-noun repo reads.
 
 **Service-to-service calls are fine** when reusing real orchestration. The
 genuine smells are narrower: layering inversion (a low-level unit depending on a
@@ -351,7 +368,7 @@ easiest for coverage:
 
 Tests live in a repo-root `tests/` split by type — `tests/unit/` (mills, plus
 pure helpers from any layer; organised by convenience, not mirroring the
-code) and `tests/integration/` (gates by port + subdomain, links by port +
+code) and `tests/integration/` (gates by port + page, links by port +
 adapter).
 
 An uncovered line is covered by the test type that owns its layer — never raise
@@ -365,29 +382,33 @@ unit-tested wherever it lives.
 - `links.py` or `gates.py` as a single file — both need the `{port}/{adapter}`
   axis from day one
 - `pacts/`, `specs/`, `mills/`, or `inits/` promoted to a package before it
-  earned it — one subdomain, well under ~1000 lines, no merge friction
+  earned it — one noun, well under ~1000 lines, no merge friction
 - `pacts.py` flat while `mills/` is a package (or vice versa) — the symmetry
   rule covers promotion too
 - Nested folders holding one or two small files (see **Growing rules** — folder
   needs ≥2 leaves)
-- Folder created for a single file (e.g. `inits/services/billing/invoicing.py`
+- Folder created for a single file (e.g. `inits/services/invoices/issuing.py`
   with no sibling) — flatten until the bucket is justified
 - Port axis inside `mills/` or `specs/` (e.g. `mills/web/...`)
 - `specs` imported from `links`, `gates`, or `inits` — specs are only for mills
 - `pacts/dtos.py`, `pacts/protocols.py`, or `pacts/repos/` instead of
-  `pacts/{subdomain}.py`
+  `pacts/{noun}.py`
 - `pacts/core.py` — a `common/` bucket wearing a nicer name; use the
-  subdomain / port / wiring axes
+  noun / port / wiring axes
 - `common/` or `shared/` folder in any layer
-- `pacts/` sliced by entity while `mills/` sliced by context (or vice versa) —
+- `pacts/` sliced by entity while `mills/` sliced by verb (or vice versa) —
   axes must match
+- A catch-all verb module (`manage.py`, `organize.py`, `misc.py`) — a cut must
+  name a real activity
+- Noun axis inside `gates/` (e.g. `gates/web/django/invoices.py` when the
+  interface has no such page) — gates mirror the interface, not the domain
 - Model and repository in the same `links` file (collapses the
   internal-vs-public boundary)
 - ORM model imported from outside `links/` (use the repo protocol from `pacts`
   instead)
 - `links/{port}/{adapter}/__init__.py` re-exporting models, or omitting a public
   repo class (the facade is the public surface)
-- Suffix-sibling links files (`repositories_billing.py`, `models_auth.py`) —
+- Suffix-sibling links files (`repositories_invoices.py`, `models_users.py`) —
   promote to a `{kind}/` package with submodules instead
 - Business rules in form validation — gates check format; meaning belongs in
   mills
