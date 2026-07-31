@@ -8,20 +8,20 @@ first axis — the port — is known before any code exists.
 
 ```text
 pacts.py                                 # start here
-pacts/{subdomain}.py
-pacts/{subdomain}/{bounded_context}.py
+pacts/{noun}.py
+pacts/{noun}/{verb}.py
 pacts/{port}.py                          # port machinery, e.g. pacts/db.py
 pacts/services.py                        # wiring contracts, mirrors inits
 
 specs.py
-specs/{subdomain}.py
+specs/{noun}.py
 
 mills.py
-mills/{subdomain}.py
-mills/{subdomain}/{bounded_context}.py
+mills/{noun}.py
+mills/{noun}/{verb}.py
 
 inits.py
-inits/repositories.py                    # inits splits by what it wires, never by subdomain
+inits/repositories.py                    # inits splits by the type of object it wires
 inits/services.py
 
 links/{port}/{adapter}.py                # e.g. links/db/sqlite.py
@@ -30,8 +30,8 @@ links/{port}/{adapter}/{kind}/{module}.py
 links/{port}/{adapter}/__init__.py       # facade — the public surface
 
 gates/{port}/{adapter}.py                # e.g. gates/cli/argparse.py
-gates/{port}/{adapter}/{subdomain}.py
-gates/{port}/{adapter}/{subdomain}/{bounded_context}.py
+gates/{port}/{adapter}/{page}.py
+gates/{port}/{adapter}/{page_group}/{page}.py
 ```
 
 ## Splitting rules
@@ -42,34 +42,34 @@ it — a folder needs at least two leaves to justify existing.
 
 See [Growing rules](growing.md) for the full set of thresholds.
 
-Correct progression for a growing `billing` subdomain:
+Correct progression for a growing `invoices` noun:
 
 ```text
 # Start flat — one module per layer
 pacts.py
 mills.py
 
-# Promote when a second subdomain appears, or the module grows large
+# Promote when a second noun appears, or the module grows large
 pacts/
 ├── __init__.py
-├── billing.py
-└── auth.py
+├── invoices.py
+└── users.py
 
 mills/
 ├── __init__.py
-├── billing.py
-└── auth.py
+├── invoices.py
+└── users.py
 
-# Split again when a subdomain's concerns diverge
-pacts/billing/
+# Cut by verb when the noun's activities diverge
+pacts/invoices/
 ├── __init__.py
-├── invoicing.py
-└── subscriptions.py
+├── issue.py
+└── refund.py
 
-mills/billing/
+mills/invoices/
 ├── __init__.py
-├── invoicing.py
-└── subscriptions.py
+├── issue.py
+└── refund.py
 ```
 
 `pacts` and `mills` promote at the same time, at every level. Symmetry covers
@@ -79,11 +79,15 @@ the module-to-package step too.
 
 | Axis | Naming style | Examples |
 | --- | --- | --- |
-| Subdomain | lowercase, no separators | `auth`, `billing`, `content` |
-| Bounded context | lowercase, no separators | `invoicing`, `subscriptions` |
+| Noun | lowercase, no separators | `invoices`, `users`, `events`, `panel` |
+| Verb | lowercase, no separators | `issue`, `refund`, `enroll` |
+| Page | lowercase, follows the interface | `dashboard`, `checkout`, `export` |
 | Port | lowercase, snake_case | `cli`, `web`, `db`, `payment_api` |
 | Adapter | lowercase | `argparse`, `postgres`, `stripe` |
 | Kind | lowercase, plural | `models`, `repositories` |
+
+Nouns are not forced to a single plurality — `events` are many, a `panel` is
+one. Name each after the thing it is.
 
 ## Project root layout
 
@@ -142,8 +146,8 @@ Keep `__init__.py` empty by default, and import each symbol from the module that
 defines it:
 
 ```python
-from myproject.pacts.billing import InvoiceDTO   # correct
-from myproject.pacts import InvoiceDTO           # avoid
+from myproject.pacts.invoices import InvoiceDTO   # correct
+from myproject.pacts import InvoiceDTO            # avoid
 ```
 
 The sanctioned exceptions — the [`links` adapter
@@ -154,10 +158,13 @@ overview](../layers/index.md#keep-__init__py-empty).
 
 - `links.py` or `gates.py` as a single file — the `{port}/{adapter}` axis is
   known up front
-- Promoting `pacts/` or `mills/` to a package before a second subdomain exists
+- Promoting `pacts/` or `mills/` to a package before a second noun exists
 - `pacts/` as a package while `mills.py` is still flat — promote both together
 - `links/db/postgres/user.py` — links files are per-kind, not per-entity
-- `models_billing.py`, `repositories_auth.py` — promote to a `{kind}/` package instead
-- `pacts/dtos.py` or `pacts/protocols.py` — split by subdomain, not by technical
+- `models_invoices.py`, `repositories_users.py` — promote to a `{kind}/`
+  package instead
+- `pacts/dtos.py` or `pacts/protocols.py` — split by noun, not by technical
   kind
+- `pacts/manage.py` or `mills/invoices/misc.py` — a verb cut must name a real
+  activity
 - A `common/` or `shared/` directory inside any layer
