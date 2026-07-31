@@ -42,9 +42,9 @@ exceptions without explicit approval.
 - **Boundaries are enforced, not promised.** A wrong import fails the build.
   Drift is caught by CI, not by reviewer vigilance.
 - **Structure is earned.** Layers start as single modules and split when size or
-  friction demands it — never in anticipation of subdomains you have not
+  friction demands it — never in anticipation of nouns you have not
   discovered.
-- **Ports are known, subdomains are discovered.** `links` and `gates` get their
+- **Ports are known, nouns are discovered.** `links` and `gates` get their
   axis on day one; `pacts` and `mills` find theirs as the domain emerges.
 - **The layer under test dictates the test type.** Pure core gets unit tests;
   IO-bearing boundaries get integration tests against real infrastructure.
@@ -56,8 +56,8 @@ exceptions without explicit approval.
   each other
 - [Request lifecycle](patterns/lifecycle.md) — one request traced through every
   layer
-- [Slicing vocabulary](slicing/index.md) — ports, adapters, subdomains, bounded
-  contexts, entities
+- [Slicing vocabulary](slicing/index.md) — ports, adapters, nouns, verbs,
+  pages, entities
 - [File layout](slicing/file-layout.md) — concrete path patterns per layer
 - [Growing rules](slicing/growing.md) — when to split a file, when to stay flat
 - [Patterns & Red Flags](patterns/index.md) — how the layers work together and

@@ -144,6 +144,11 @@ class ProposalDetailView(View):
         return render(request, "proposals/detail.html", {"proposal": proposal})
 ```
 
+One module holds one page and its action views — `proposals.py` is the
+proposals page, not the proposals noun. When the sitemap has a section, the
+files get a directory for it (`checkout/payment.py`); the tree follows the
+interface, never `mills`.
+
 URL patterns live in `gates/web/django/urls.py`, named from settings by
 string:
 
@@ -163,7 +168,8 @@ kilometres of business logic is a gate leaking into `mills`.
 
 Management commands live in `gates/cli/django/management/commands/`, inside
 the `CliGatesConfig` app — Django only discovers commands in installed apps.
-They call services exactly as views do.
+They call services exactly as views do. The `management/commands/` path is
+Django's, not GLIMPSE's; one file per command still lands one page per module.
 
 ```text
 gates/cli/django/

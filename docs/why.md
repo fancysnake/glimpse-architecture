@@ -28,7 +28,7 @@ No `edges/` — a CLI project doesn't need one. The entry point is a dotted
 string in `pyproject.toml` (`[project.scripts]` → `myproject.inits:run`), and
 `inits` composes the gates from there.
 
-No empty scaffolding, no guessing at subdomains. The [growing
+No empty scaffolding, no guessing at nouns you do not have yet. The [growing
 rules](slicing/growing.md) say exactly when a module becomes a package and when
 a file splits — structure is earned, not planned. You can start a weekend script
 this way and grow it into a product without a rewrite.
