@@ -23,7 +23,7 @@ the code:
 ```text
 tests/
 ├── unit/            # mills, plus pure helpers from any layer
-└── integration/     # gates (by port + subdomain), links (by port + adapter)
+└── integration/     # gates (by port + page), links (by port + adapter)
 ```
 
 `tests/unit/` is organised by convenience — group by submodule or layer only

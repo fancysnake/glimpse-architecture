@@ -3,24 +3,24 @@
 !!! warning "Status: 0.1 — conventions may still shift"
 
 The layer rules say which *layer* may import which. They say nothing about what
-may call what *within* a layer. That question — can this subdomain read that
-one, can this service call that one — has its own answers, and they are more
+may call what *within* a layer. That question — can this noun read that one,
+can this service call that one — has its own answers, and they are more
 permissive than most people assume.
 
-## Cross-subdomain access is fine
+## Cross-noun access is fine
 
-Repositories cross subdomains freely. **Data access is not behavior.**
+Repositories cross nouns freely. **Data access is not behavior.**
 
-An entry point in the `billing` subdomain reading a user from the `auth`
-subdomain is normal. It is not a boundary violation, and wrapping it in a
-`billing`-owned service that does nothing but forward the call buys nothing.
+A page on the `invoices` noun's turf reading a user from `users` is normal. It
+is not a boundary violation, and wrapping it in an `invoices`-owned service
+that does nothing but forward the call buys nothing.
 
-The smell to watch for is duplicated *behavior* across subdomains — the same
-rule enforced in two places, drifting apart. The fix is a **shared lower-level
-mill function** that both subdomains call.
+The smell to watch for is duplicated *behavior* across nouns — the same rule
+enforced in two places, drifting apart. The fix is a **shared lower-level mill
+function** that both nouns call.
 
-The fix is never a blanket rule against cross-subdomain repository reads. That
-rule produces a layer of pass-through services and hides nothing.
+The fix is never a blanket rule against cross-noun repository reads. That rule
+produces a layer of pass-through services and hides nothing.
 
 ## Service-to-service calls are fine
 

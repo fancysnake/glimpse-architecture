@@ -74,7 +74,7 @@ methods accept (`create(data: CreateProposalDict) -> ProposalDTO`). A
 `CreateXDict` carries no `id` — the store assigns it.
 
 ```python
-# pacts/proposals.py
+# pacts/proposals.py — the proposals noun
 class CreateProposalDict(TypedDict):
     title: str
     author_id: int
@@ -176,16 +176,16 @@ reaches a mill.
 
 **A layer promoted to a package before it earned it**
 : `pacts/`, `specs/`, `mills/`, or `inits/` as a directory while there is one
-  subdomain, well under ~1000 lines, and no merge friction. The tree is
-  anticipating subdomains you have not discovered.
+  noun, well under ~1000 lines, and no merge friction. The tree is
+  anticipating nouns you have not discovered.
 
 **Mismatched promotion between pacts and mills**
 : `pacts/` is a package but `mills.py` is still flat. The symmetry rule covers
   the module-to-package step too.
 
 **Nested folders holding one or two small files**
-: `pacts/billing/invoicing/create.py` when `pacts/billing/invoicing.py` would
-  do. A folder needs at least two leaves to exist.
+: `pacts/invoices/issue/create.py` when `pacts/invoices/issue.py` would do. A
+  folder needs at least two leaves to exist.
 
 **Port axis inside mills or specs**
 : `mills/web/proposals.py` or `specs/api/...`. Mills and specs have no
@@ -197,18 +197,27 @@ reaches a mill.
   alone. A constant needed elsewhere is either configuration (`edges`) or a
   contract (`pacts`).
 
-**pacts split by technical kind instead of subdomain**
+**pacts split by technical kind instead of noun**
 : `pacts/dtos.py`, `pacts/protocols.py`, `pacts/repos/`. These group by what the
   type *is*, not by what domain concern it belongs to. This forces unrelated
-  subdomains to share files and makes the package harder to navigate.
+  nouns to share files and makes the package harder to navigate.
+
+**A catch-all verb module**
+: `manage.py`, `organize.py`, `misc.py` inside a noun. A verb cut must name a
+  real activity — if you cannot name one, the noun is not too big yet.
+
+**A noun axis inside gates**
+: `gates/web/django/invoices.py` when the interface has no such page. Gates
+  mirror the interface; mills mirror the domain. The two trees are not
+  expected to match.
 
 **common/ or shared/ folder in any layer**
 : This is a magnet for unrelated code. Extract truly shared types to `pacts`; if
   something is shared across layers, it belongs there.
 
 **Mismatched slicing axes between pacts and mills**
-: `pacts/billing/invoicing.py` exists but `mills/billing.py` has not split yet —
-  or vice versa. The two layers must mirror each other.
+: `pacts/invoices/issue.py` exists but `mills/invoices.py` has not been cut yet
+  — or vice versa. The two layers must mirror each other.
 
 **Model and repository in the same links file**
 : This collapses the internal-vs-public boundary. Models are internal to the
@@ -219,8 +228,8 @@ reaches a mill.
   `models.py` holds many entities' models.
 
 **Suffix-sibling links files**
-: `repositories_billing.py`, `models_auth.py`. Promote the kind to a `{kind}/`
-  package with submodules instead. Halve, don't shard.
+: `repositories_invoices.py`, `models_users.py`. Promote the kind to a
+  `{kind}/` package with submodules instead. Halve, don't shard.
 
 **A links facade that re-exports models, or omits a public repository**
 : `links/{port}/{adapter}/__init__.py` *is* the public surface. Whatever it
