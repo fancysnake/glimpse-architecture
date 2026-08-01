@@ -27,8 +27,8 @@ tests/
 ```
 
 `tests/unit/` is organised by convenience — group by submodule or layer only
-when volume demands it. The strict symmetry rules of the source tree do not
-apply here.
+when volume demands it. The slicing rules of the source tree do not apply
+here.
 
 ## Unit tests: mills
 

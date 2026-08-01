@@ -126,14 +126,16 @@ protocol as a base class, so mypy verifies conformance.
 
 ## gates/web/django — views and forms
 
-Views are class-based, annotate the request as `RootRequest`, and reach data
-through a service. They never touch a repository.
+Views annotate the request as `RootRequest` and reach data through a service.
+They never touch a repository. Whether they are class-based or function-based
+is a Django question, not a GLIMPSE one — the example below happens to use a
+class.
 
 ```python
 # gates/web/django/proposals.py
 from django.views import View
 
-from myproject.gates.web.django.entities import RootRequest
+from myproject.gates.web.django.request import RootRequest
 
 
 class ProposalDetailView(View):
@@ -297,7 +299,7 @@ the web gate — never instantiated. The middleware mutates the real request;
 the subclass gives annotations something true-shaped to say.
 
 ```python
-# gates/web/django/entities.py
+# gates/web/django/request.py
 from django.http import HttpRequest
 
 from myproject.pacts.services import ServicesProtocol

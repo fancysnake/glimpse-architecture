@@ -27,3 +27,23 @@ pip install -U pip
 poetry update
 poetry show -o
 """
+
+[tasks.skill]
+description = "Regenerate SKILL.md from SKILL.src.md + rules/"
+run = "python tools/build_skill.py"
+
+[tasks.skill-check]
+description = "Fail if SKILL.md is stale"
+run = "python tools/build_skill.py --check"
+
+[tasks.lint]
+description = "Lint markdown"
+run = "markdownlint-cli2"
+
+[tasks.docs]
+description = "Build the docs site strictly"
+run = "mkdocs build --strict"
+
+[tasks.check]
+description = "Everything CI runs"
+depends = ["skill-check", "lint", "docs"]

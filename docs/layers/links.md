@@ -106,14 +106,7 @@ rules](../slicing/growing.md#split-links-by-kind-first).
 
 ## Red flags
 
-- Model and repository in the same file — collapses the internal-vs-public boundary
-- `links/db/{adapter}/{entity}.py` — links files are per-kind, not per-entity
-- Suffix-sibling files (`repositories_billing.py`, `models_auth.py`) — promote
-  to a `{kind}/` package instead
-- The facade re-exporting models, or omitting a public repository class
-- An ORM model imported from outside `links/` — use the repository protocol from
-  `pacts`
-- Repository imported directly in a gate or mill — inject it via `inits`
-- `links` importing `specs` — business invariants are for mills only
-- A single `links.py` file — the `{port}/{adapter}` axis is known up front
-- `links` growing a `common/` or `shared/` subdirectory — extract to `pacts`
+The registry lives in one place: [links red
+flags](../patterns/index.md#links), plus [layout and
+slicing](../patterns/index.md#layout-and-slicing) for the entries that cut
+across layers — a single `links.py`, and `common/` or `shared/` subdirectories.

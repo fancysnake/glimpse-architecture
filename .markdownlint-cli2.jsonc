@@ -10,5 +10,5 @@
     }
   },
   "globs": ["docs/**/*.md", "*.md"],
-  "ignores": ["site/**", "review.md"]
+  "ignores": ["site/**", "SKILL.src.md"]
 }

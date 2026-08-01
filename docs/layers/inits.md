@@ -43,11 +43,13 @@ differs by port:
     ```python
     # inits/cli.py
     def run() -> None:
-        gate = CliGate(
-            reports=_build_report_service(),
-        )
+        services = Services()
+        gate = CliGate(reports=services.reports)
         gate.build_parser().run()
     ```
+
+    The registry is the same one the web path uses — only the delivery
+    differs. Nothing dispatches, so `inits` calls the gate itself.
 
 `inits` is the **only** layer that may import `gates`.
 
@@ -149,26 +151,32 @@ See [Growing rules](../slicing/growing.md).
 
 ## Slicing axis
 
-Start as a single `inits.py` module holding both registries and the middleware.
-When it outgrows one file, it splits by **the type of object it wires** — each
-module named after the kind of thing it holds, never after a noun and never
-after a port:
+**There is no axis to get right here.** `inits` is thin by construction — it
+holds no logic, only wiring — and stays thin as the project grows: even the
+largest codebase on GLIMPSE keeps the whole layer under a thousand lines. Every
+other layer gets a prescribed axis because getting it wrong costs a rewrite;
+`inits` is small enough that it never does.
+
+So: start as a single `inits.py` holding the registries and the middleware, and
+when one file stops being comfortable, split it the obvious way — a module per
+registry class, plus one for whatever binds them to the runtime:
 
 ```text
 inits.py                 # start here
 
 inits/repositories.py    # promoted
 inits/services.py
-inits/middleware.py
+inits/middleware.py      # web — attaches the container to the request
+inits/cli.py             # CLI — composes the gates and hands them to the runtime
 ```
 
-Nouns appear only as sub-buckets *inside* a registry, once it crosses ~12
-leaves — see [Growing the registries](#growing-the-registries).
+Those names are a suggestion, not a rule. Pick whatever reads best; nothing in
+GLIMPSE depends on the choice.
 
 ## Red flags
 
-- A gate constructing repository or service instances — breaks the wiring
-- `mills` importing from `inits` — `mills` must remain framework-free
-- `inits` containing business logic — it should only wire, never decide
-- `inits` importing `specs` — business invariants are for mills only
-- A folder in `inits/services/` holding a single leaf — flatten it
+The registry lives in one place: [inits red
+flags](../patterns/index.md#inits), plus [layout and
+slicing](../patterns/index.md#layout-and-slicing) for the folder-needs-two-leaves
+entry. Note that none of them constrain how `inits` is sliced — that is a
+convenience call.

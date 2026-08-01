@@ -15,9 +15,10 @@ None of the thresholds below is a hard line. All of them mean *watch for this*.
 
 On day one you have `mills.py` — one module, one noun's worth of logic, no
 plan for the rest. `pacts`, `specs`, and `mills` are sliced by noun, and the
-nouns arrive as the domain does. `inits` splits by the type of object it wires
-— promotion means `repositories.py` + `services.py` (+ `middleware.py`), never
-`inits/{noun}.py`. Start each as a single module.
+nouns arrive as the domain does. `inits` has no axis to get right: it stays
+thin, and promotion usually means `repositories.py` + `services.py`
+(+ `middleware.py`) simply because that is the obvious split. Start each as a
+single module.
 
 ```text
 pacts.py
@@ -40,9 +41,9 @@ written. You know you are building a CLI. You know you are talking to a
 database. Deferring that axis buys nothing and costs an import rewrite the day a
 second adapter appears.
 
-Because `pacts` and `mills` must [mirror each other](index.md#symmetry-rule),
-they promote together. `pacts/` as a package while `mills.py` is still flat is a
-drift red flag.
+`pacts` and `mills` share the noun/verb axis but promote independently — each
+when its own size or friction demands it. `mills/` as a package while
+`pacts.py` is still one file is fine, and so is the reverse.
 
 ## ~1000 lines per file
 

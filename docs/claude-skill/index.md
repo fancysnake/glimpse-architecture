@@ -41,7 +41,9 @@ curl -fsSL https://raw.githubusercontent.com/fancysnake/glimpse-architecture/mai
 
 The canonical copy lives at
 [`SKILL.md`](https://github.com/fancysnake/glimpse-architecture/blob/main/SKILL.md)
-in the repository root; the block below is generated from it.
+in the repository root; the block below is generated from it. `SKILL.md` is
+itself assembled from `SKILL.src.md` and the shared rule fragments in `rules/`
+— editing it by hand is a mistake CI catches. Contributors run `mise run skill`.
 
 ````markdown
 --8<-- "SKILL.md"

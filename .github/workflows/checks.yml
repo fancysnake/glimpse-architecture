@@ -1,0 +1,26 @@
+name: Checks
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install mkdocs-material
+      - name: SKILL.md is up to date
+        run: python tools/build_skill.py --check
+      - name: Lint markdown
+        run: npx --yes markdownlint-cli2@0.22.1
+      - name: Build docs
+        run: mkdocs build --strict

@@ -11,7 +11,7 @@ pacts.py                                 # start here
 pacts/{noun}.py
 pacts/{noun}/{verb}.py
 pacts/{port}.py                          # port machinery, e.g. pacts/db.py
-pacts/services.py                        # wiring contracts, mirrors inits
+pacts/services.py                        # wiring contracts (ServicesProtocol)
 
 specs.py
 specs/{noun}.py
@@ -21,7 +21,7 @@ mills/{noun}.py
 mills/{noun}/{verb}.py
 
 inits.py
-inits/repositories.py                    # inits splits by the type of object it wires
+inits/repositories.py                    # inits stays thin — split it as convenient
 inits/services.py
 
 links/{port}/{adapter}.py                # e.g. links/db/sqlite.py
@@ -31,7 +31,8 @@ links/{port}/{adapter}/__init__.py       # facade — the public surface
 
 gates/{port}/{adapter}.py                # e.g. gates/cli/argparse.py
 gates/{port}/{adapter}/{page}.py
-gates/{port}/{adapter}/{page_group}/{page}.py
+gates/{port}/{adapter}/{page_group}/{page}.py   # whichever grouping the
+gates/{port}/{adapter}/{page}/{subpage}.py      # interface already has
 ```
 
 ## Splitting rules
@@ -72,8 +73,8 @@ mills/invoices/
 └── refund.py
 ```
 
-`pacts` and `mills` promote at the same time, at every level. Symmetry covers
-the module-to-package step too.
+`pacts` and `mills` use the same axis, so their trees tend to look alike — but
+each promotes when its own size or friction says so, not in lockstep.
 
 ## Naming conventions
 
@@ -136,9 +137,11 @@ myproject/
 │   └── services.py
 └── edges/
     ├── settings/
-    ├── manage.py
     └── wsgi.py
 ```
+
+What lands in `edges/` is whatever the framework owns: settings plus a WSGI
+entry point here, and a `manage.py` too on Django. See [edges](../layers/edges.md).
 
 ## `__init__.py` policy
 
@@ -156,15 +159,6 @@ overview](../layers/index.md#keep-__init__py-empty).
 
 ## What to avoid
 
-- `links.py` or `gates.py` as a single file — the `{port}/{adapter}` axis is
-  known up front
-- Promoting `pacts/` or `mills/` to a package before a second noun exists
-- `pacts/` as a package while `mills.py` is still flat — promote both together
-- `links/db/postgres/user.py` — links files are per-kind, not per-entity
-- `models_invoices.py`, `repositories_users.py` — promote to a `{kind}/`
-  package instead
-- `pacts/dtos.py` or `pacts/protocols.py` — split by noun, not by technical
-  kind
-- `pacts/manage.py` or `mills/invoices/misc.py` — a verb cut must name a real
-  activity
-- A `common/` or `shared/` directory inside any layer
+Every layout mistake is catalogued in [Drift red
+flags](../patterns/index.md#drift-red-flags) — start with [layout and
+slicing](../patterns/index.md#layout-and-slicing).

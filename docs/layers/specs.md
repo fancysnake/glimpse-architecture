@@ -51,8 +51,6 @@ applies if it does. See [Growing rules](../slicing/growing.md).
 
 ## Red flags
 
-- `specs` imported from `links`, `gates`, or `inits` — specs are only for mills
-- `specs` reading from `os.environ` or `settings` — that belongs in `edges`
-- `specs` performing IO of any kind — it is a constants layer
-- Port or adapter axis inside `specs` (e.g. `specs/web/...`) — `specs` has no
-  delivery-mechanism axis
+The registry lives in one place: [specs red
+flags](../patterns/index.md#specs), plus [layout and
+slicing](../patterns/index.md#layout-and-slicing) for the port-axis entry.

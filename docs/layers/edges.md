@@ -45,6 +45,9 @@ guide](../guides/import-linter.md) for the two `edges` contracts.
 
 ## Layout
 
+The example below is Django's, because Django names all four of these files
+and most readers will recognise them:
+
 ```text
 edges/
 ├── settings/
@@ -55,6 +58,23 @@ edges/
 ├── wsgi.py
 └── asgi.py
 ```
+
+If you don't know Django, the point survives the rename — every one of these
+is a file the *runtime* opens, never one your code imports:
+
+- **`settings/`** — the configuration the framework reads at startup. It names
+  project code by dotted string (`MIDDLEWARE`, `ROOT_URLCONF`), so it can point
+  at `inits` and `gates` without importing them. Splitting it by environment
+  (`local`, `production`) is a convention, not a rule.
+- **`wsgi.py` / `asgi.py`** — the object a web server imports to serve the
+  application. Gunicorn or Uvicorn loads it; nothing in the project does.
+- **`manage.py`** — Django's CLI entry point, the script you run rather than
+  import. Other stacks have their own: a Flask project has no `manage.py`, a
+  bare CLI project has none of these files at all.
+
+That is the whole membership test. A file belongs in `edges` when the runtime
+reaches for it and the project never does — which is also why the root
+middleware, which imports services, lives in `inits` instead.
 
 See [File layout](../slicing/file-layout.md) for where `edges/` sits in the
 project root. Most architectural decisions happen in the six inner layers.

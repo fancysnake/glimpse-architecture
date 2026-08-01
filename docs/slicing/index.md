@@ -7,61 +7,7 @@ layers. Understanding these terms is necessary to place any new file correctly.
 
 ## Vocabulary
 
-**Port**
-: The delivery mechanism, named after the domain concept it serves.
-: Examples: `cli`, `web`, `db`, `payment_api`, `email`
-: A port describes *what* the integration does from the domain's perspective,
-  not *how*.
-
-**Adapter**
-: The specific technology implementing a port.
-: Examples: `postgres`, `sqlite`, `argparse`, `stripe`, `sendgrid`
-: One port can have multiple adapters — usually **coexisting**, not
-  interchangeable. `payment_api/stripe` and `payment_api/paypal` are both
-  wired and both live; which one handles a given payment is a business
-  decision made in a mill, through the protocols it holds. Genuine
-  substitution (`db/postgres` vs `db/sqlite`) is the rarer case: one adapter
-  wired per deployment, chosen in `inits`.
-: One technology can serve multiple ports. A full-stack framework shipping both
-  an ORM and a request layer appears as `db/{framework}` and `web/{framework}` —
-  two separate adapters that share nothing but a name.
-
-**Kind**
-: A category of module inside one `links` adapter — the slicing axis for `links`.
-: Examples: `models`, `repositories` for a `db` adapter; `transport`, `types`,
-  `signer` for an API client.
-: Kinds are per-adapter. The `db` shape is not a universal template.
-
-**Noun**
-: A fat data cow — the model cluster everything else hangs off.
-: Examples: `invoices`, `customers`, `proposals`, `users`
-: The primary slicing axis for `pacts`, `mills`, and `specs`.
-: Plurality is not prescribed; it follows the noun. `events` are many, a
-  `panel` is one.
-: Nouns are GLIMPSE's own axis, not a DDD import. If another axis fits a
-  project better, slice by that instead; the layer rules don't change.
-
-**Verb**
-: An activity cut inside a noun.
-: Examples: `issue`, `refund`, `enroll`, `schedule`
-: A verb module holds the records and logic of actions, not first-class data.
-  Verbs nest inside nouns: `invoices` might cut into `issue` and `refund`.
-: No catch-all verbs. `manage`, `organize`, and `misc` name no activity — if
-  you cannot name a real one, the file is not too big yet.
-
-**Page**
-: What the user touches — the slicing axis for `gates`.
-: Examples: a page or page group for web, a command for a CLI, a view for a
-  TUI, a tool for MCP
-: Gates mirror the shape of the interface; mills mirror the domain. The two
-  need not line up, and forcing them to is how a sitemap ends up in `mills`.
-
-**Entity**
-: A persistence-level concept: the unit that a DTO and a repository wrap.
-: Narrower than a noun — one noun spans many entities.
-: Conceptual, **not a file-layout axis**. `links` slices by kind, so one
-  `models.py` holds many entities' models. There is no
-  `links/db/{adapter}/{entity}.py`.
+--8<-- "rules/vocabulary.md"
 
 ## Hierarchy
 
@@ -107,13 +53,16 @@ the layer they serve — `pacts/{port}.py` for port machinery
 contracts (`pacts/services.py`). See the [placement
 algorithm](../layers/pacts.md#slicing-axis).
 
-`pacts` and `mills` must mirror each other. If `pacts` cuts a noun into verbs,
-`mills` must do the same — and vice versa.
+`pacts` and `mills` share the noun/verb axis, but they are free to promote
+independently — `mills/` may be a package while `pacts.py` is still one file.
+Each layer splits when its own size or friction says so.
 
-### inits — by the type of object it wires
+### inits — however is convenient
 
-`inits` starts as a single module and splits into its registries. Each is
-named after the kind of object it holds, never after a noun:
+`inits` stays thin: even the largest project on GLIMPSE keeps the whole layer
+under a thousand lines. There is no axis to get right. Start as a single
+module, and when one file stops being comfortable, split it the obvious way —
+a module per registry class, plus one that binds everything together:
 
 ```text
 inits.py                 # start here
@@ -122,8 +71,8 @@ inits/services.py
 inits/middleware.py
 ```
 
-Noun grouping appears only as sub-buckets inside a registry past ~12
-leaves. See [inits](../layers/inits.md).
+Nothing rides on those names; pick what reads best for the project. See
+[inits](../layers/inits.md).
 
 ### links — port / adapter / kind
 
@@ -153,25 +102,24 @@ the shape of the interface itself — whatever grouping that interface already
 has.
 
 ```text
-gates/{port}/{adapter}.py                 # flat while there is one page
+gates/{port}/{adapter}.py                      # flat while there is one page
 gates/{port}/{adapter}/{page}.py
-gates/{port}/{adapter}/{page_group}/{page}.py
+gates/{port}/{adapter}/{page_group}/{page}.py  # whichever grouping
+gates/{port}/{adapter}/{page}/{subpage}.py     # the interface already has
 ```
 
 Examples:
 
 ```text
 gates/cli/argparse.py
-gates/cli/argparse/export.py           # a CLI's pages are its commands
+gates/cli/argparse/export.py             # a CLI's pages are its commands
+gates/cli/argparse/report/monthly.py     # ...grouped as the CLI groups them
 gates/web/flask/dashboard.py
-gates/web/flask/checkout/payment.py    # page group / page
+gates/web/flask/checkout/payment.py      # page group / page
+gates/web/flask/proposal/comments.py     # page / subpage
 ```
 
-## Symmetry rule
-
-`pacts/` and `mills/` must use the same slicing axis at every level. If
-`pacts/invoices/` has `issue.py` and `refund.py`, then `mills/invoices/` must
-also have `issue.py` and `refund.py`. Mismatched axes are a drift red flag.
-
-The rule stops at those two layers. `gates` mirrors the interface and `links`
-slices by kind — neither is expected to line up with the noun/verb tree.
+This axis replaced an earlier noun-based one, which did not survive contact
+with real URLs: plenty of pages belong to no single noun, and forcing one on
+them dragged business vocabulary into the interface. A gate's job is to mirror
+what the user sees.

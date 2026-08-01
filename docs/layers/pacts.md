@@ -82,15 +82,14 @@ page axis never reaches `pacts`. Place each contract by three questions, in
 order:
 
 1. **Tied to a noun?** → `pacts/{noun}.py` — DTOs, write TypedDicts, domain
-   errors, repository protocols. Cuts into `pacts/{noun}/{verb}.py` in
-   lockstep with `mills`.
+   errors, repository protocols. Cuts into `pacts/{noun}/{verb}.py` when the
+   noun grows fat — the same axis `mills` uses, promoted on its own schedule.
 2. **Tied to a port?** → `pacts/{port}.py` — e.g. `pacts/db.py` for
    `TransactionProtocol` and `DatabaseConstraintError`. The test: would the
    contract survive a total change of business domain? Then it belongs to the
    port.
-3. **About the wiring?** → a module mirroring the `inits` registry it types —
-   e.g. `pacts/services.py` for `ServicesProtocol`, mirroring
-   `inits/services.py`.
+3. **About the wiring?** → `pacts/services.py`, holding `ServicesProtocol` —
+   the contract that types the services namespace a gate sees.
 
 ```text
 pacts.py                         # start here
@@ -142,12 +141,7 @@ from whatever row the query produces).
 
 ## Red flags
 
-- `pacts/dtos.py`, `pacts/protocols.py`, or `pacts/repos/` — split by noun,
-  not kind
-- `pacts/core.py`, `pacts/common.py`, or similar — every contract has a
-  principled home under the noun / port / wiring axes
-- A verb cut that names no activity — `pacts/invoices/manage.py`
-- `pacts/` promoted to a package while `mills.py` is still flat — promote both together
-- A DTO that cannot be built from a store row or ORM instance — repositories
-  cannot return it
-- A protocol implementation that does not name the protocol as a base class
+The registry lives in one place: [pacts red
+flags](../patterns/index.md#pacts), plus [layout and
+slicing](../patterns/index.md#layout-and-slicing) for the entries that cut
+across layers — premature promotion and the catch-all verb module.

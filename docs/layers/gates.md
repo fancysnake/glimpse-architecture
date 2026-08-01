@@ -97,7 +97,7 @@ request class, defined inside the adapter — never instantiated, mutated onto
 the real request by the `inits` middleware:
 
 ```python
-# gates/web/django/entities.py
+# gates/web/django/request.py
 class RootRequest(HttpRequest):
     services: ServicesProtocol
 ```
@@ -126,7 +126,7 @@ gates/web/flask/checkout/payment.py    # page group / page
 ```
 
 **Gates mirror the interface; mills mirror the domain.** The two trees are not
-expected to match, and there is no symmetry rule between them — a single page
+expected to match, and nothing asks them to — a single page
 often calls services from several nouns, and one noun often surfaces on pages
 scattered across the sitemap. Naming a gates directory after a noun when no
 such page exists imports the domain tree into the interface, where it does not
@@ -134,13 +134,7 @@ belong.
 
 ## Red flags
 
-- A gate importing ORM models or repository classes directly — call a service
-- A gate opening a transaction — that is a service concern
-- Business rules in form validation — gates check format; meaning belongs in
-  mills
-- A gate returning ORM instances to templates — return DTOs only
-- `gates` importing `specs` — business invariants are for mills only
-- `gates/mills/...` or any non-port axis at the top level of gates
-- A noun axis below the adapter when the interface has no such page — gates
-  mirror the interface, not the domain
-- A single `gates.py` file — the `{port}/{adapter}` axis is known up front
+The registry lives in one place: [gates red
+flags](../patterns/index.md#gates), plus [layout and
+slicing](../patterns/index.md#layout-and-slicing) for the entries that cut
+across layers — a single `gates.py`, and a noun axis below the adapter.

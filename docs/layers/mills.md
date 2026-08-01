@@ -94,8 +94,9 @@ DTOs stay in `pacts` even though they feel like domain objects — see
 ## Slicing axis
 
 Start as a single `mills.py` module. Promote to a package sliced by **noun**,
-then **verb**, as the layer grows. This axis must **mirror `pacts`** exactly —
-at every level, including whether it is a module or a package.
+then **verb**, as the layer grows. `pacts` uses the same axis, so the two trees
+tend to look alike — but each promotes on its own schedule, when its own size
+or friction says so.
 
 `mills` mirrors the domain, not the interface. A verb cut names a real
 activity (`issue`, `refund`, `enroll`); if the only name you can find is
@@ -104,20 +105,15 @@ activity (`issue`, `refund`, `enroll`); if the only name you can find is
 ```text
 mills.py                         # start here, alongside pacts.py
 
-mills/invoices.py                # promoted — pacts/ promotes at the same time
+mills/invoices.py                # promoted when mills.py stops being comfortable
 mills/users.py
-mills/invoices/issue.py          # only after pacts/invoices/issue.py exists
+mills/invoices/issue.py          # cut by verb when the noun grows fat
 mills/invoices/refund.py
 ```
 
 ## Red flags
 
-- `mills` importing anything with side effects — ORM, HTTP machinery, settings
-  access — absolute violation
-- A service taking a whole UoW instead of the specific protocols it uses
-  (ambient-ORM projects)
-- `mills/web/...` or any port axis — `mills` has no delivery-mechanism axis
-- A page axis inside `mills` — gates mirror the interface, mills the domain
-- A catch-all verb module — `mills/invoices/manage.py`, `misc.py`
-- `mills` sliced differently than `pacts` — axes must mirror
-- `mills/` promoted to a package while `pacts.py` is still flat — promote both together
+The registry lives in one place: [mills red
+flags](../patterns/index.md#mills), plus [layout and
+slicing](../patterns/index.md#layout-and-slicing) for the entries that cut
+across layers — the port axis and the catch-all verb module.

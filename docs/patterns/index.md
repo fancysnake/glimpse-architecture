@@ -93,7 +93,7 @@ middleware mutates the real request; the subclass gives the annotation
 something true-shaped to say. Only `ServicesProtocol` comes from `pacts`.
 
 ```python
-# gates/web/django/entities.py
+# gates/web/django/request.py
 class RootRequest(HttpRequest):
     services: ServicesProtocol
 ```
@@ -169,79 +169,4 @@ reaches a mill.
 !!! danger "These patterns indicate architectural drift"
     If you see any of these in a codebase, treat them as bugs.
 
-**`links.py` or `gates.py` as a single file**
-: Both need the `{port}/{adapter}` axis from day one. The port is knowable
-  before any code is written; deferring it costs an import rewrite the day a
-  second adapter appears.
-
-**A layer promoted to a package before it earned it**
-: `pacts/`, `specs/`, `mills/`, or `inits/` as a directory while there is one
-  noun, well under ~1000 lines, and no merge friction. The tree is
-  anticipating nouns you have not discovered.
-
-**Mismatched promotion between pacts and mills**
-: `pacts/` is a package but `mills.py` is still flat. The symmetry rule covers
-  the module-to-package step too.
-
-**Nested folders holding one or two small files**
-: `pacts/invoices/issue/create.py` when `pacts/invoices/issue.py` would do. A
-  folder needs at least two leaves to exist.
-
-**Port axis inside mills or specs**
-: `mills/web/proposals.py` or `specs/api/...`. Mills and specs have no
-  delivery-mechanism axis. If you see a port word inside these layers, the code
-  belongs elsewhere.
-
-**specs imported from links, gates, or inits**
-: `specs` are business invariants, and business rules are enforced in `mills`
-  alone. A constant needed elsewhere is either configuration (`edges`) or a
-  contract (`pacts`).
-
-**pacts split by technical kind instead of noun**
-: `pacts/dtos.py`, `pacts/protocols.py`, `pacts/repos/`. These group by what the
-  type *is*, not by what domain concern it belongs to. This forces unrelated
-  nouns to share files and makes the package harder to navigate.
-
-**A catch-all verb module**
-: `manage.py`, `organize.py`, `misc.py` inside a noun. A verb cut must name a
-  real activity — if you cannot name one, the noun is not too big yet.
-
-**A noun axis inside gates**
-: `gates/web/django/invoices.py` when the interface has no such page. Gates
-  mirror the interface; mills mirror the domain. The two trees are not
-  expected to match.
-
-**common/ or shared/ folder in any layer**
-: This is a magnet for unrelated code. Extract truly shared types to `pacts`; if
-  something is shared across layers, it belongs there.
-
-**Mismatched slicing axes between pacts and mills**
-: `pacts/invoices/issue.py` exists but `mills/invoices.py` has not been cut yet
-  — or vice versa. The two layers must mirror each other.
-
-**Model and repository in the same links file**
-: This collapses the internal-vs-public boundary. Models are internal to the
-  adapter; repositories are its public surface.
-
-**links files named per entity**
-: `links/db/postgres/user.py`. `links` slices by kind, not by entity. One
-  `models.py` holds many entities' models.
-
-**Suffix-sibling links files**
-: `repositories_invoices.py`, `models_users.py`. Promote the kind to a
-  `{kind}/` package with submodules instead. Halve, don't shard.
-
-**A links facade that re-exports models, or omits a public repository**
-: `links/{port}/{adapter}/__init__.py` *is* the public surface. Whatever it
-  exports is public; everything else is internal.
-
-**An ORM model imported from outside links/**
-: Use the repository protocol from `pacts` instead.
-
-**A gate that opens a transaction**
-: Atomicity is a service concern.
-
-**Business rules in form validation**
-: Gates validate format — an email, an int, a date. Meaning ("email or
-  username required", seat limits) belongs in mills, which alone may read
-  `specs`.
+--8<-- "rules/red-flags.md"

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning].
 
 ### Added
 
+- `SKILL.md` is now generated. Rule text shared with the docs site lives once
+  in `rules/`; `SKILL.src.md` and the docs pages both pull it in with the same
+  `--8<--` include. Rebuild with `mise run skill`; CI fails on a stale file
+- Drift red flags consolidated into a single registry in Patterns & Red Flags,
+  grouped by layer. The per-layer pages link to it instead of restating it
+- `mise` tasks: `skill`, `skill-check`, `lint`, `docs`, and `check`
+- A Checks workflow running the skill, lint, and strict-docs gates on every
+  branch and pull request — previously nothing ran outside `main`
+- Explanation of what each `edges` file is for, aimed at readers who do not
+  know Django
 - Hexagonal-architecture translation table in Why GLIMPSE
 - `pacts` placement algorithm — contracts slice by noun, port, or wiring
   (`pacts/db.py`, `pacts/services.py`); `pacts/core.py` named a red flag
@@ -39,10 +49,15 @@ and this project adheres to [Semantic Versioning].
   thing they are, with no prescribed plurality; a verb cut must name a real
   activity
 - Gates mirror the interface, mills mirror the domain — the two trees are not
-  expected to match, and the symmetry rule binds `pacts` and `mills` only
-- `inits` slicing restated: modules are named after the type of object they
-  wire (`repositories.py`, `services.py`, `middleware.py`), never after a
-  noun or a port
+  expected to match. Below port and adapter, `gates` takes whatever grouping
+  the interface already has: command or command group for a CLI, page group /
+  page or page / subpage for the web. The old noun axis did not survive contact
+  with real URLs — plenty of pages belong to no single noun
+- `inits` slicing is no longer prescribed. The layer is thin by construction —
+  under a thousand lines even in the largest project on GLIMPSE — so it splits
+  however is convenient. A module per registry class plus one that binds them
+  (`repositories.py`, `services.py`, `middleware.py`, `cli.py`) is a
+  suggestion, not a rule
 - Layer-promotion rationale restated as "on day one you have `mills.py`"
 - "Framework-free" mills redefined by side effects, not package names — pure
   framework helpers allowed; enforcement level is a per-project choice
@@ -59,9 +74,18 @@ and this project adheres to [Semantic Versioning].
 - `edges` defined by two-way isolation and documented as optional for CLI
   projects; `edges/main.py` removed from layouts
 - Unit-of-Work rule scoped to ambient-ORM projects
+- The typed web request lives in `gates/web/{adapter}/request.py`, not
+  `entities.py` — `entity` is a defined GLIMPSE term for a persistence-level
+  concept, which the request is not
+- Class-based views are no longer presented as the recommended Django shape;
+  that is a framework choice, not a GLIMPSE one
 
 ### Removed
 
+- **The pacts/mills symmetry rule.** The two layers share the noun/verb axis
+  but promote independently — `mills/` may be a package while `pacts.py` is
+  still one file. Nothing enforced the rule and nothing depended on it; in
+  practice `mills` splits first. Three red flags went with it
 - `inits does not import gates` importlinter contract (now an optional
   web-only stricter policy)
 - Entity-level mills red flag — a leftover concept
@@ -69,6 +93,8 @@ and this project adheres to [Semantic Versioning].
   lower-level mill function
 - DDD's strategic vocabulary — subdomains and bounded contexts are gone from
   the slicing rules entirely, replaced by nouns and verbs
+- The `review.md` entry in the markdownlint ignore list — a local scratch file
+  that was never in the repository
 
 ## [0.1.0] - 2026-07-09
 
