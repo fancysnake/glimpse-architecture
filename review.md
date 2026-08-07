@@ -89,11 +89,24 @@ project hits them, not by effort.
     Tell: change a `specs` value and only `mills` changes; change a `pacts`
     value and every enforcer changes together.
 
-- [ ] **A6. No runnable example.** "Reference, not a template" is fair, but
+- [x] **A6. No runnable example.** "Reference, not a template" is fair, but
   pointing at a large production Django app is not a substitute for ~150 lines
   of complete, runnable CLI project — the six files from `why.md`. Every
   snippet elides imports; the first commit has to be assembled from fragments
   across nine pages. Proposal: `examples/hello-cli/`, tested in CI.
+
+    **Ruled: no example project.** It would be code to maintain in a repo that
+    holds none, and it would drift from the docs it illustrates. Replaced by
+    A6b — the same need met by pointing at real projects, which stay current
+    because someone else already maintains them.
+
+- [ ] **A6b. An examples page listing real GLIMPSE projects.** One row each:
+  what the project is, which port it leads with, which layers have been
+  promoted, and the one thing it is worth opening for. `why.md` describes a
+  day-one CLI that no linked project visibly demonstrates — tingle is exactly
+  that shape (a CLI, no `edges`, `Services()` taking no arguments); Ludamus is
+  the grown Django end. A reader needs to know which to open for their
+  situation, and the page needs no CI to stay true.
 
 ## B — Contradictions and bugs in existing text
 
