@@ -1,7 +1,5 @@
 # Patterns & Red Flags
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 These patterns describe how GLIMPSE layers collaborate at runtime. Where one
 shows up as an import, the linter catches it; most are calls rather than
 imports, and those hold by code review.

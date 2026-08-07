@@ -1,7 +1,5 @@
 # Slicing Vocabulary & Rules
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 GLIMPSE uses a precise vocabulary to describe how code is organised within
 layers. Understanding these terms is necessary to place any new file correctly.
 

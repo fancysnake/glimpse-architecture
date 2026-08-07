@@ -1,7 +1,5 @@
 # Projects using GLIMPSE
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 GLIMPSE is a reference, not a template: there is no starter project to clone,
 and this repository ships no example code. What it can point at is real
 projects, which stay honest because someone maintains them.

@@ -1,7 +1,5 @@
 # Growing Rules
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 **Default: start as small as possible. Split only when size or friction makes
 the case for itself.**
 

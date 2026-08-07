@@ -1,7 +1,5 @@
 # Request Lifecycle
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 One HTTP request, traced through every layer. A CLI command follows the same
 shape with a different opening: there is no `edges` and no middleware —
 `pyproject.toml` names `inits` by dotted string, and `inits` constructs the

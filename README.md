@@ -1,6 +1,6 @@
 # GLIMPSE Architecture
 
-> **Status: 0.1 — conventions may still shift**
+> **Status: 0.2 — conventions may still shift**
 
 A framework-agnostic clean architecture pattern for Python projects. Seven named
 layers with strict, enforced import rules — the name is the layers: **G**ates,

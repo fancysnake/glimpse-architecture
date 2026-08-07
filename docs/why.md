@@ -1,7 +1,5 @@
 # Why GLIMPSE?
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 Hexagonal architecture, clean architecture, onion architecture — the ideas are
 decades old and sound: ports and adapters, dependencies pointing inward, a
 framework-free core. What none of them ship is the first commit. You can read

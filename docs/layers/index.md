@@ -1,7 +1,5 @@
 # Layers Overview
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 GLIMPSE defines seven layers: six inner layers, each with a single
 responsibility and a fixed set of allowed dependencies, plus `edges` — the
 framework shell outside the import rules.

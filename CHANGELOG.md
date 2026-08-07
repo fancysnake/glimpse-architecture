@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-07
+
 ### Added
 
 - `SKILL.md` is now generated. Rule text shared with the docs site lives once
@@ -136,6 +138,10 @@ and this project adheres to [Semantic Versioning].
   import, the linter catches it
 - The day-one tree on the layers overview no longer carries an `edges/`
   directory the CLI it describes does not have
+- The status banner is a site-wide announcement bar, defined once in
+  `overrides/main.html`. It was a per-page admonition on ten pages and missing
+  from the seven layer pages and both guides, so the pages it mattered on were
+  the ones without it
 
 ### Removed
 
@@ -201,6 +207,7 @@ and this project adheres to [Semantic Versioning].
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/fancysnake/glimpse-architecture/releases/tag/v0.0.1

@@ -1,8 +1,5 @@
 # GLIMPSE Architecture
 
-!!! warning "Status: 0.1 — conventions may still shift"
-    The ideas are stable; some naming and details are not.
-
 GLIMPSE is a framework-agnostic clean architecture pattern for Python projects.
 It organises code into seven named layers with strict, enforced import rules —
 so every dependency direction is intentional, every abstraction has a designated

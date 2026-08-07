@@ -1,7 +1,5 @@
 # Testing
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 **The layer under test dictates the test type.** Not convenience, not what is
 easiest to get coverage from.
 

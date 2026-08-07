@@ -1,7 +1,5 @@
 # Dependency Direction
 
-!!! warning "Status: 0.1 — conventions may still shift"
-
 The layer rules say which *layer* may import which. They say nothing about what
 may call what *within* a layer. That question — can this noun read that one,
 can this service call that one — has its own answers, and they are more
