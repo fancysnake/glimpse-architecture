@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning].
   migrations placement, `ROOT_URLCONF`, `admin.py` next to models,
   framework-owned surfaces (`request.user`, `django_login`), no `ModelForm`
 - Importlinter contracts for both directions of `edges` isolation
+- Projects page listing real GLIMPSE codebases at three stages — tingle (CLI,
+  the day-one shape grown up), vekna (the layers repeated inside self-contained
+  packages), Ludamus (production Django) — with what each is worth opening for.
+  The home page links it instead of naming one project
 - A test telling `specs` and `pacts` apart, and shape constants listed among
   `pacts` contents. A constant more than one layer must *enforce* is a fact
   about the shape of the data and belongs beside the contract it constrains; a

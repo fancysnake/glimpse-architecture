@@ -100,13 +100,48 @@ project hits them, not by effort.
     A6b — the same need met by pointing at real projects, which stay current
     because someone else already maintains them.
 
-- [ ] **A6b. An examples page listing real GLIMPSE projects.** One row each:
+- [x] **A6b. An examples page listing real GLIMPSE projects.** One row each:
   what the project is, which port it leads with, which layers have been
   promoted, and the one thing it is worth opening for. `why.md` describes a
   day-one CLI that no linked project visibly demonstrates — tingle is exactly
   that shape (a CLI, no `edges`, `Services()` taking no arguments); Ludamus is
   the grown Django end. A reader needs to know which to open for their
   situation, and the page needs no CI to stay true.
+
+    **Done.** `docs/examples.md`, in the nav as *Projects*, replacing the bare
+    Ludamus link on the home page: tingle (the day-one shape grown up), vekna
+    (the layers at two scales), Ludamus (production Django). Each entry says
+    what stage it is at and what it is worth opening for — the stage is the
+    point, since structure is earned and a young project should not look like a
+    grown one. Reading vekna to write it produced G1–G3.
+
+## G — Raised by vekna, which the reference does not describe
+
+- [ ] **G1. Layers inside a self-contained package are undocumented.** vekna
+  runs GLIMPSE twice: ordinary layer packages at the root, and the same seven
+  layers again inside each component (`lexicon/_pacts.py`,
+  `folio/shell/_links.py`) — one underscored module per layer, promoted to a
+  package when it earns it, with the component's `__init__.py` as its one
+  public door. The reference assumes exactly one set of layers per project, so
+  a reader who opens vekna concludes the docs are wrong. Either name the
+  variant and its trigger (a plugin architecture; a component that must not be
+  importable from the rest), or say the reference covers the single-scale case
+  only. `examples.md` currently carries a note doing the latter.
+
+- [ ] **G2. Wildcard contracts for a repeated layer set are not in the Import
+  Linter guide.** vekna enforces the inner layering with
+  `source_modules = ["vekna.folio.*._mills"]`, plus package-boundary contracts
+  (a folio may not import another folio; the root may not import the lexicon) —
+  31 in total. The guide shows one flat set and nothing about composing
+  contracts at two scales. Depends on the G1 ruling.
+
+- [ ] **G3. `inits` may import `specs` in vekna.** Its layer table grants
+  `inits` → `pacts, specs, mills, links, gates`; the reference forbids
+  `inits` → `specs`, and the published contract set encodes that. One of the
+  two is wrong. (Unrelated but adjacent: vekna's architecture doc calls "gates
+  may import only pacts" *stricter than textbook GLIMPSE* — the reference has
+  since moved to exactly that rule, so that half has converged and the note is
+  stale rather than divergent.)
 
 ## B — Contradictions and bugs in existing text
 

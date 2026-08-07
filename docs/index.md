@@ -16,9 +16,9 @@ dependency diagram — everything stands on pacts, specs sits under mills, and
 gates, mills, and links meet only in inits.
 
 This is a **reference**, not a template. GLIMPSE describes how to structure
-code; it does not generate it. For a real-world example, see
-[Ludamus](https://github.com/zagrajmy/ludamus) — a production Django project
-built on GLIMPSE.
+code; it does not generate it. For real-world code, see [projects using
+GLIMPSE](examples.md) — a CLI at the shape day one produces, a plugin
+architecture running the layers at two scales, and a production Django app.
 
 ## The Seven Layers
 
@@ -52,6 +52,7 @@ exceptions without explicit approval.
 ## Where to start
 
 - [Why GLIMPSE](why.md) — what it adds over plain hexagonal architecture
+- [Projects using GLIMPSE](examples.md) — real code at three different stages
 - [Layers overview](layers/index.md) — what each layer is and how they depend on
   each other
 - [Request lifecycle](patterns/lifecycle.md) — one request traced through every
