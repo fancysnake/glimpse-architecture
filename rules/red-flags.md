@@ -80,7 +80,8 @@
 
 **mills importing anything with side effects**
 : An ORM, HTTP machinery, a CLI parser, settings access — absolute violation.
-  Pure computation is fine wherever it comes from.
+  Pure computation is fine wherever it comes from. So is the ambient stuff the
+  rule was never about: the clock, a random draw, a UUID, a log line.
 
 **A service taking a whole Unit of Work instead of the protocols it uses**
 : Applies to ambient-ORM projects. With a session-based ORM the session already

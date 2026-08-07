@@ -281,11 +281,21 @@ does not get rediscovered and rewritten in six months.
     tool-agnostic throughout — the two places that named mypy now say "a type
     checker", since which one is not GLIMPSE's argument to have.
 
-- [ ] **C4. Is `logging` allowed in `mills`?** It does IO and touches global
+- [x] **C4. Is `logging` allowed in `mills`?** It does IO and touches global
   state, and the rule is written as an absolute. Same question for
   `datetime.now()`, `uuid4()`, `random` — the values hexagonal architecture
   normally puts behind a clock/id port. First thing a reader hits; currently
   unanswerable. Affects: `layers/mills.md`, `rules/red-flags.md`.
+
+    **Done.** All allowed. The rule guards destructive operations and output
+    the program depends on, not everything ambient — the clock sits there like
+    the CPU does, a log no correctness depends on is invisible, and all of it
+    is mockable. Two further points, both stated as preferences: logging reads
+    better at the edge (mills raise, gates catch and log), and a generated
+    value that is *input* to what the service does rather than something it
+    produces on the way should be passed in — from a link when the making is
+    somebody else's job. A link earns its place even as a one-line wrapper,
+    because it names an external capability, not a line count.
 
 - [ ] **C5. Who closes the connection?** `inits`' contents list "opening and
   closing connections"; only opening is ever shown. Needed for the sqlite CLI

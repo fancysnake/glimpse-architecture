@@ -22,6 +22,25 @@ you copy the function's body into your project and change nothing about your
 design? How strictly to *enforce* the line is a per-project choice — see the
 [Import Linter guide](../guides/import-linter.md#the-mills-framework-contract).
 
+### The clock, an id, a log line
+
+What the rule guards against is **destructive operations and output the
+program depends on** — not everything ambient. Reading the clock, drawing a
+random number, minting a UUID, writing a log line: none of those destroys
+anything, the clock sits there like the CPU sits there, and a log no
+correctness depends on is invisible. Each is mockable when a test needs it
+fixed. None of them makes a mill impure.
+
+Logging still reads better at the edge — a mill raises, and the gate that
+catches decides what to record. That is a preference, not a rule.
+
+Readability is the real test for a generated value. If a timestamp or an id is
+*input* to what the service does rather than something it produces on the way,
+take it as an argument and let the caller make it. When the making is somebody
+else's job, that caller is `inits` handing over a link — and a link earns its
+place even if the wrapper is one line, because what it names is an external
+capability, not a line count.
+
 If a service needs data access, it receives repository protocols via
 constructor injection.
 

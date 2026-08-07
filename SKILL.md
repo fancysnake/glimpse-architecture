@@ -74,6 +74,15 @@ HTTP machinery, settings access). Pure computation is fine wherever it comes
 from — `django.utils.text.slugify` qualifies. Enforcement level (ban package /
 review-guarded / ban effectful subtrees) is a per-project choice.
 
+The rule guards against destructive operations and output the program depends
+on, not everything ambient: the clock, a random draw, a UUID, a log line are
+all fine in a mill, and all mockable. Logging reads better at the edge anyway
+(mills raise, gates catch and log) — a preference, not a rule. If a generated
+value is *input* to what the service does rather than something it produces on
+the way, take it as an argument; when the making is somebody else's job, that
+is a link, and a link earns its place even as a one-line wrapper because it
+names an external capability.
+
 **No DDD tactical patterns.** GLIMPSE has no aggregates or value objects —
 data moves as DTOs and write TypedDicts; invariants live in service code. The
 slicing axes are GLIMPSE's own — noun, verb, page — not DDD's subdomains and
@@ -548,7 +557,8 @@ unit-tested wherever it lives.
 
 **mills importing anything with side effects**
 : An ORM, HTTP machinery, a CLI parser, settings access — absolute violation.
-  Pure computation is fine wherever it comes from.
+  Pure computation is fine wherever it comes from. So is the ambient stuff the
+  rule was never about: the clock, a random draw, a UUID, a log line.
 
 **A service taking a whole Unit of Work instead of the protocols it uses**
 : Applies to ambient-ORM projects. With a session-based ORM the session already
