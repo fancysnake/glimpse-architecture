@@ -310,10 +310,17 @@ does not get rediscovered and rewritten in six months.
     the way `TransactionProtocol` wraps a transaction, and the caller never
     handles the lifetime.
 
-- [ ] **C6. Why TypedDict for writes and Pydantic for reads?** Asserted in
+- [x] **C6. Why TypedDict for writes and Pydantic for reads?** Asserted in
   three places, never justified. And partial updates (`UpdateXDict`,
   `total=False`) are not covered at all. Affects: `patterns/index.md#5`,
   `layers/pacts.md`.
+
+    **Done.** The split is the `id`, and there is no grander reason. A DTO has
+    one because a stored thing has one; a thing being created does not, and a
+    nullable `id` covering both pushes a null check into everything that
+    touches it. A write shape is also short-lived — built just before the call,
+    consumed by it — so it never makes the trip a DTO makes. Partial updates
+    left uncovered on purpose: a reader holding that reason works them out.
 
 ## D — Missing topics
 

@@ -88,6 +88,12 @@ class ProposalDTO(BaseModel):
     title: str
 ```
 
+The split is the `id`. A DTO has one because a stored thing has one; a thing
+being created does not, and giving the DTO a nullable `id` to cover both pushes
+a null check into everything that touches it. A write shape is also short-lived
+— built just before the call and consumed by it — so it never makes the trip a
+DTO makes.
+
 ### 6. Web requests typed via a gate-local subclass
 
 A web gate types the request as a typing-only subclass of the framework's

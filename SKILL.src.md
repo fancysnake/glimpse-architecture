@@ -325,7 +325,9 @@ hatches, not invitations.
 5. **Writes use TypedDicts.** DTOs for reads, TypedDicts for writes — gates →
    mills as input, mills → links as what repo write methods accept
    (`create(data: CreateProposalDict) -> ProposalDTO`; a `CreateXDict` has no
-   `id` — the store assigns it).
+   `id` — the store assigns it). The split is the `id`: a nullable one on the
+   DTO would push a null check into everything that touches it, and a write
+   shape is short-lived enough that it never makes the trip a DTO makes.
 6. **Web requests typed via a gate-local typing-only subclass** of the
    framework request (`class RootRequest(HttpRequest): services:
    ServicesProtocol` in the web adapter) — never instantiated; middleware
