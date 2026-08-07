@@ -170,10 +170,17 @@ does not get rediscovered and rewritten in six months.
 
 ## B — Contradictions and bugs in existing text
 
-- [ ] **B1.** `guides/django.md` — the `Services` example wires
+- [x] **B1.** `guides/django.md` — the `Services` example wires
   `audit=self._repos.audit`, but the `Repositories` class above it defines only
   `proposals` and `users`. The `mills` example on the same page has the same
   mismatch.
+
+    **Done**, against Ludamus rather than by patching the symbol: `audit` and
+    `connections` leaves added, imports completed (the block named neither
+    service class it constructs), and a `connections` leaf that reads
+    `settings.CREDENTIALS_ENCRYPTION_KEY` and hands it to the link — which is
+    what Ludamus does, and the A1 rule appearing where a Django reader will
+    meet it.
 
 - [ ] **B2.** `layers/gates.md` — the error-handling example calls
   `read_by_slug(slug, sphere_id)`; `sphere_id` is never introduced. Ludamus
@@ -197,6 +204,13 @@ does not get rediscovered and rewritten in six months.
   Evidence: tingle, a CLI with no settings whatsoever, carries an
   `edges/__init__.py` holding nothing but a docstring — the published contract
   set forces an empty package into existence.
+
+- [ ] **B6. `DjangoTransaction` is in `links` in Ludamus.**
+  `guides/django.md` states it "lives in `inits`, not `links`: it is binding
+  glue over the framework's ambient transaction machinery, not an adapter with
+  a store behind it" — a positive claim carrying a rationale. Ludamus puts it
+  at `links/db/django/transaction.py`. Found while fixing B1: either one of the
+  two moves, or the claim softens to a preference.
 
 ## C — Stated as obvious, isn't
 
@@ -310,7 +324,11 @@ worth deciding whether it is a rule or a default, in one line, either way.
   a helper the `typer` adapter imports. Same shape one layer over:
   `links/editor.py` is a link with no port directory at all. The docs say the
   level below `gates`/`links` is always the port, and below the port always the
-  adapter, so both are unplaceable as written.
+  adapter, so both are unplaceable as written. Ludamus does the same at scale —
+  `links/encryption.py`, `links/google_docs.py`, `links/gravatar.py`,
+  `links/scheduler.py`, `links/ticket_api.py`, all beside a fully-structured
+  `links/db/django/`. Two projects out of two, which makes this the docs being
+  stricter than the practice they recorded.
 
 - [x] **Out of scope — F2. `__main__.py` belongs to no layer.** tingle keeps
   `src/tingle/__main__.py` at the package root, importing `inits.cli.run`. By

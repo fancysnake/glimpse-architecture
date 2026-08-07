@@ -218,9 +218,18 @@ are no boundaries to inject across.
 from contextlib import contextmanager
 from functools import cached_property
 
+from django.conf import settings
 from django.db import DataError, IntegrityError, transaction
 
-from myproject.links.db.django import ProposalRepository, UserRepository
+from myproject.links.crypto.fernet import FernetEncryptor
+from myproject.links.db.django import (
+    AuditRepository,
+    ConnectionsRepository,
+    ProposalRepository,
+    UserRepository,
+)
+from myproject.mills.connections import ConnectionsService
+from myproject.mills.proposals import ProposalService
 from myproject.pacts.db import DatabaseConstraintError
 
 
@@ -251,6 +260,14 @@ class Repositories:
     def users(self) -> UserRepository:
         return UserRepository()
 
+    @cached_property
+    def audit(self) -> AuditRepository:
+        return AuditRepository()
+
+    @cached_property
+    def connections(self) -> ConnectionsRepository:
+        return ConnectionsRepository()
+
 
 class Services:
     def __init__(self) -> None:
@@ -265,6 +282,13 @@ class Services:
             transaction=self._transaction,
         )
 
+    @cached_property
+    def connections(self) -> ConnectionsService:
+        key: str = settings.CREDENTIALS_ENCRYPTION_KEY
+        return ConnectionsService(
+            self._repos.connections, FernetEncryptor(key), self._transaction
+        )
+
 
 class ServicesMiddleware:
     def __init__(self, get_response):
@@ -274,6 +298,12 @@ class ServicesMiddleware:
         request.services = Services()
         return self.get_response(request)
 ```
+
+The `connections` leaf shows where configuration enters: `inits` reads
+`settings` and hands the value to the leaf that needs it, so the link takes a
+key rather than fetching one. Reading `django.conf.settings` imports the
+framework, not `edges` — see
+[configuration](../layers/inits.md#configuration-enters-here).
 
 `DjangoTransaction` lives in `inits`, not `links`: it is binding glue over the
 framework's ambient transaction machinery, not an adapter with a store behind
