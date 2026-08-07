@@ -116,7 +116,7 @@ __all__ = ["ProposalRepository", "UserRepository"]
 ```
 
 Nothing outside the adapter imports `models`. The repository class names its
-protocol as a base class, so mypy verifies conformance.
+protocol as a base class, so the type checker verifies conformance.
 
 !!! note "Django technicality"
     When `models.py` grows past ~1000 lines and is promoted to a `models/`

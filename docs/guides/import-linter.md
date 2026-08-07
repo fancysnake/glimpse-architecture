@@ -243,4 +243,5 @@ encode.
 
 - `edges` sits outside GLIMPSE but not outside the contracts — it may import
   any third-party package and no project module at all.
-- Add `lint-imports` to your pre-commit configuration alongside ruff and mypy.
+- Add `lint-imports` to your pre-commit configuration, alongside the formatter
+  and type checker.

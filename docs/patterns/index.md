@@ -156,6 +156,10 @@ class ProposalRepository(ProposalRepositoryProtocol):
     ...
 ```
 
+This assumes a type checker runs. Subclassing a `Protocol` explicitly inherits
+its stub bodies, so an unimplemented method returns `None` at runtime instead
+of failing — the checker is what turns the declaration into a check.
+
 The exception is very generic structural protocols — `TransactionProtocol`,
 callbacks — with multiple unrelated duck-typed implementations.
 

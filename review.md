@@ -265,13 +265,21 @@ does not get rediscovered and rewritten in six months.
   nowhere. The naming table covers directories and axes only; symbols need the
   same table. Affects: `slicing/file-layout.md#naming-conventions`.
 
-- [ ] **C3. The conformance argument depends on mypy, which is never
+- [x] **C3. The conformance argument depends on mypy, which is never
   required.** Pattern 11's whole justification is "the type checker verifies
   conformance", but mypy is not in the toolchain guidance. Worse: explicitly
   subclassing a `Protocol` inherits its stub bodies, so a missing method
   silently returns `None` at runtime. State that mypy in CI is part of GLIMPSE,
   and name the gotcha. Affects: `patterns/index.md#11`, `layers/pacts.md`,
   `guides/import-linter.md`.
+
+    **Done.** New design principle: *types are the other half of the
+    enforcement* — the linter checks the layers, a type checker checks the
+    contracts, and a protocol nothing verifies is a comment. Pattern 11 names
+    the gotcha in two lines: an explicit `Protocol` subclass inherits the stub
+    bodies, so an unimplemented method returns `None` rather than failing. Kept
+    tool-agnostic throughout — the two places that named mypy now say "a type
+    checker", since which one is not GLIMPSE's argument to have.
 
 - [ ] **C4. Is `logging` allowed in `mills`?** It does IO and touches global
   state, and the rule is written as an absolute. Same question for

@@ -346,8 +346,10 @@ hatches, not invitations.
     per process (pooled clients, connections). See **Growing rules** for when
     to bucket.
 11. **Protocol implementations declare the protocol as a base class** — where
-    a protocol exists — so the intent is explicit and the type checker
-    verifies conformance. Exception: very generic structural protocols
+    a protocol exists — so the intent is explicit and a type checker verifies
+    conformance. This assumes one runs: an explicit `Protocol` subclass
+    inherits the stub bodies, so an unimplemented method returns `None` rather
+    than failing. Exception: very generic structural protocols
     (`TransactionProtocol`, callbacks) with multiple unrelated duck-typed
     implementations.
 12. **Gates validate format, mills validate meaning.** A gate checks input

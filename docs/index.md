@@ -58,6 +58,9 @@ exceptions without explicit approval.
   depends outward. Swap a framework or an adapter, keep the contracts.
 - **Boundaries are enforced, not promised.** A wrong import fails the build.
   Drift is caught by CI, not by reviewer vigilance.
+- **Types are the other half of the enforcement.** The linter checks the
+  layers; a type checker checks the contracts. Annotate, and run one in CI —
+  a protocol nothing verifies is a comment.
 - **Structure is earned.** Layers start as single modules and split when size or
   friction demands it — never in anticipation of nouns you have not
   discovered.
