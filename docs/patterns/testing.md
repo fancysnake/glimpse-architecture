@@ -30,6 +30,12 @@ tests/
 when volume demands it. The slicing rules of the source tree do not apply
 here.
 
+GLIMPSE does not decide the test layout at all. What it decides is which *type*
+of test a layer earns; the tree above is what has worked, not a rule. Nothing
+about the layers constrains fixtures, factories, or helpers either — a test may
+reach for whatever it needs to set the world up, including an adapter's
+internals.
+
 ## Unit tests: mills
 
 `mills` has no IO by construction. The test constructs the service with

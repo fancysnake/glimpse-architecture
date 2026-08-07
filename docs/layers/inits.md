@@ -150,6 +150,16 @@ resource (a pooled HTTP session, an expensive client) calls the cached
 factory — `return StripeClient(_stripe_session())` — and the container shape
 never changes.
 
+## Cross-cutting wrappers go on here
+
+Caching, metrics, retries, event dispatch — anything that wraps behaviour
+without being it — is applied where the object graph is built. The leaf returns
+the decorated object; the mill stays the mill, and nothing inside it knows it
+was wrapped.
+
+That is also why a cache is not a mill doing IO: the mill computes, and `inits`
+decides that this particular wiring remembers the answer.
+
 ## Configuration enters here
 
 Deployment values — a database path, an API key, a timeout — enter the object

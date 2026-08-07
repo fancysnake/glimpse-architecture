@@ -336,13 +336,25 @@ surface — rather than asking for new coverage.
 
 Kept below unticked, as the record of what was deliberately not written.
 
+**Ruled one by one**, and the answers confirm the striking: four are "not tried
+yet, so nothing honest to write" (D1 jobs, D3 FastAPI, D4 non-Django
+migrations, D9 adoption — the last with an untested sketch: start
+`links → mills → gates` layered, introduce `inits` and the injection after).
+Three had answers small enough to fold into rules that already exist (D5, D7,
+D8). Two are best served by pointing at the code (D2, D6). None needed a page.
+
 - [ ] **D1. Background jobs / task queues.** Celery, RQ, cron. Presumably
   `gates/{port}/{adapter}`, but "port = delivery mechanism" plus "page = what
   the user touches" does not obviously stretch to a job with no user.
 
-- [ ] **D2. Async.** Zero mentions across the whole doc set. `async def`
+- [x] **D2. Async.** Zero mentions across the whole doc set. `async def`
   services, async repositories, `TransactionProtocol` as `async with`, async
   middleware.
+
+    **Answered by pointing.** vekna is async and the layers do not change: an
+    async service is still a mill, an async client still a link. One line on
+    its entry in the projects page. Nothing about async moves a boundary, which
+    is why it needs no page.
 
 - [ ] **D3. A second web framework.** FastAPI's `Depends` is a competing
   composition root — does it replace `inits`, or hand off from it? Do FastAPI
@@ -353,24 +365,44 @@ Kept below unticked, as the record of what was deliberately not written.
 - [ ] **D4. Migrations outside Django.** Alembic, plain SQL. By the Django
   precedent `links/db/{adapter}/migrations/`, but say it.
 
-- [ ] **D5. Test fixtures and factories.** Integration tests must construct ORM
+- [x] **D5. Test fixtures and factories.** Integration tests must construct ORM
   models, which the facade declares internal ("never from a module inside it").
   Do tests get an exemption, and where do factories live? Also missing: a
   wiring smoke test that every registry leaf constructs — the one test that
   catches the failure mode `inits` invites — and how to integration-test a CLI
   gate. Affects: `patterns/testing.md`.
 
-- [ ] **D6. Auth / current user / tenancy in the general case.** The Django
+    **Ruled: there is no problem.** GLIMPSE does not decide the test layout —
+    only which *type* of test a layer earns. Nothing about the layers
+    constrains fixtures or factories, and a test may reach an adapter's
+    internals to set the world up. `testing.md` now says so, which retires the
+    facade question. CLI integration testing is a pointer to tingle on the
+    projects page, not a section.
+
+- [x] **D6. Auth / current user / tenancy in the general case.** The Django
   guide handles `request.user` as a named exemption. Generically: does every
   service method take a `user_id`? Is there a principal DTO in `pacts`? Row-level
   tenant scoping?
 
-- [ ] **D7. Caching, metrics, feature flags.** Cache is presumably
+    **Answered by pointing.** On Django it rides on the request; Ludamus
+    carries a `RequestContext` with the current site and user, so a mill is
+    told who it is acting for rather than reaching for it. A line on the
+    Ludamus entry, not a rule — the shape is a project's call.
+
+- [x] **D7. Caching, metrics, feature flags.** Cache is presumably
   `links/cache/redis`, but a cache decorator on a mill method is a mill doing
   IO. Name the resolution.
 
-- [ ] **D8. Domain events / signals / outbox.** Unmentioned; Django signals in
+    **Done, and it generalises.** Cross-cutting wrappers are applied where the
+    object graph is built: the `inits` leaf returns the decorated object, the
+    mill stays the mill, and nothing inside it knows it was wrapped. That is
+    also why a cache is not a mill doing IO — the mill computes, and `inits`
+    decides that this wiring remembers the answer.
+
+- [x] **D8. Domain events / signals / outbox.** Unmentioned; Django signals in
   particular will turn up uninvited inside `links`.
+
+    **Same answer as D7** — wired in `inits`, covered by the same two lines.
 
 - [ ] **D9. Adopting GLIMPSE in an existing project.** Everything assumes a
   first commit; the common case is a five-year-old Django app. "Out of scope,

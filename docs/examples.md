@@ -37,6 +37,8 @@ Worth opening for:
 - **`pacts` and `mills` promoted on their own schedules.** Both are packages;
   `mills/metrics/` has cut by verb while its `pacts` counterpart is still one
   module.
+- **Integration tests for a CLI gate.** What a full-command test looks like
+  when the port is a terminal rather than HTTP.
 
 ## vekna — GLIMPSE at two scales
 
@@ -66,6 +68,8 @@ Worth opening for:
   one binary, so the root reaches the cast runtime by name at call time rather
   than importing it, typed through a `Protocol` — dependency inversion used to
   keep an import out of a process, not to make a test easier.
+- **Async.** The layers do not change: an async service is still a mill, an
+  async client still a link.
 
 !!! note "Creative, not deviant"
     These pages describe one set of layers per project, so vekna's arrangement
@@ -78,3 +82,11 @@ Worth opening for:
 A conference and event platform: the grown, web end of the range. It is where
 the [Django guide](guides/django.md) comes from — apps as markers with custom
 labels, the `ServicesMiddleware`, `RootRequest`, and gates sliced by page.
+
+Worth opening for:
+
+- **Who is asking.** A `RequestContext` carrying the current site and user
+  rides along with the request, so a mill is told who it is acting for instead
+  of reaching for it.
+- **Registries at scale.** Enough repositories and services to show what the
+  flat `@cached_property` tree looks like well past a toy example.
