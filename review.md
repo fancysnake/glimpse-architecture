@@ -247,10 +247,17 @@ does not get rediscovered and rewritten in six months.
 
 ## C — Stated as obvious, isn't
 
-- [ ] **C1. "Noun = a fat data cow"** gives no purchase on a contested domain.
+- [x] **C1. "Noun = a fat data cow"** gives no purchase on a contested domain.
   `invoices` or `billing`? Is `payments` a noun or a verb under `invoices`?
   Every example is a case where the answer was never in doubt. Add one worked
   example of choosing badly and the symptom that reveals it.
+
+    **Done in three lines, not the book it could have been.** The nouns depend
+    on what the system is *for*, not on the words in its domain: an invoice
+    tracker slices by `invoices`; a subscription service slices by `billing`,
+    and an invoice is a detail inside it. Same word, opposite verdict, and the
+    deciding question is stated — which is all a reader needs to apply it to a
+    domain the docs have never seen.
 
 - [x] **Optional — C2. Symbol naming is never specified.** `ProposalDTO`,
   `CreateProposalDict`, `ProposalRepositoryProtocol`, `ProposalService`,

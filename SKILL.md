@@ -156,6 +156,9 @@ line-length pressure, or a pre-existing legacy facade. It is not the default.
 : A fat data cow — the model cluster everything else hangs off.
 : Examples: `invoices`, `customers`, `proposals`, `users`
 : The primary slicing axis for `pacts`, `mills`, and `specs`.
+: Which nouns exist depends on what the system is *for*, not on the words in
+  the domain. An invoice tracker slices by `invoices`; a subscription service
+  slices by `billing`, and an invoice is a detail inside it.
 : Plurality is not prescribed; it follows the noun. `events` are many, a
   `panel` is one.
 : Nouns are GLIMPSE's own axis, not a DDD import. If another axis fits a
