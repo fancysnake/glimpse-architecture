@@ -29,6 +29,13 @@ edges   Settings, wsgi, manage.py. Outside GLIMPSE; optional (CLI projects skip 
 Import rules enforced by `importlinter` (`pyproject.toml` →
 `[tool.importlinter]`). No exceptions without explicit approval.
 
+**What is fixed, and what is guidance.** Absolute: which layer code belongs to,
+and which layer may import which. Everything below — slicing axes, thresholds,
+file names, patterns — is recorded practice. Follow it by default; treat an
+arrangement it does not describe as legitimate when it follows a real need and
+breaks no import rule. **Absence of a rule is not a violation**, so do not
+flag code for failing to match a shape this reference never required.
+
 **Composition is per-port.** `inits` composes the object graph everywhere; how
 it reaches gates differs. Web: the framework dispatches to gates, so `inits`
 never imports them — middleware builds `Services()` per request and attaches

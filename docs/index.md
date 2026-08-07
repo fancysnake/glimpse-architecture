@@ -20,6 +20,23 @@ code; it does not generate it. For real-world code, see [projects using
 GLIMPSE](examples.md) — a CLI at the shape day one produces, a plugin
 architecture running the layers at two scales, and a production Django app.
 
+## What is fixed, and what is guidance
+
+Two things are absolute: **which layer a piece of code belongs to**, and
+**which layer may import which**. Those are enforced by the linter, and a
+project that bends them is not doing GLIMPSE.
+
+Everything else on this site is guidance — practices that worked, got written
+down, and are worth copying until your own project says otherwise. The slicing
+axes, the thresholds, the file names: default to them, and change them when a
+real need appears rather than when it would be tidier.
+
+So this is not a catalogue with an entry for every decision, and it is not
+trying to become one. An arrangement these pages do not describe is not
+thereby wrong — **absence of a rule is not a violation**. Read this to
+understand what the import rules are protecting and why each practice exists;
+derive the rest for the project in front of you.
+
 ## The Seven Layers
 
 ```text

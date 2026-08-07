@@ -41,6 +41,12 @@ and this project adheres to [Semantic Versioning].
   migrations placement, `ROOT_URLCONF`, `admin.py` next to models,
   framework-owned surfaces (`request.user`, `django_login`), no `ModelForm`
 - Importlinter contracts for both directions of `edges` isolation
+- **What is fixed, and what is guidance.** Two things are absolute — which
+  layer code belongs to, and which layer may import which. Everything else is
+  recorded practice, to default to and to change when a real need appears.
+  Absence of a rule is not a violation, and the site is not trying to become a
+  catalogue with an entry for every decision. The same paragraph is in the
+  skill, so a generated review stops treating silence as drift
 - Projects page listing real GLIMPSE codebases at three stages — tingle (CLI,
   the day-one shape grown up), vekna (the layers repeated inside self-contained
   packages), Ludamus (production Django) — with what each is worth opening for.

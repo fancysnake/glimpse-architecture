@@ -67,10 +67,11 @@ Worth opening for:
   than importing it, typed through a `Protocol` — dependency inversion used to
   keep an import out of a process, not to make a test easier.
 
-!!! note "Not the documented layout"
-    The layers-inside-a-package arrangement is not described anywhere in this
-    reference, which assumes one set of layers per project. Read vekna for how
-    the rules behave under a plugin architecture, not for the file layout.
+!!! note "Creative, not deviant"
+    These pages describe one set of layers per project, so vekna's arrangement
+    appears nowhere in them. It followed a need — components that must not
+    import each other — and it breaks no import rule, which is all GLIMPSE
+    fixes. [Absence of a rule is not a violation](index.md#what-is-fixed-and-what-is-guidance).
 
 ## Ludamus — production Django
 

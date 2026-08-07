@@ -7,6 +7,27 @@ architecture in theory, has never applied either in production.
 Tick an item when the docs answer it. Items are ordered by how early a new
 project hits them, not by effort.
 
+## Re-triaged against what GLIMPSE actually claims
+
+The list was written assuming a reference owes an answer to every question a
+new project raises. It does not. Two things are fixed — layer membership and
+the import rules — and everything else is recorded practice. Absence of a rule
+is not a violation, and a reader comes here for the spirit of the rules, not to
+look up whether to use Pydantic.
+
+So an item survives only if it is one of:
+
+- **a rule that cannot be followed as written** (A1, A2)
+- **a rule contradicted by its own examples** (B)
+- **a rule whose meaning is unclear at the line where it bites** (C3, C4)
+- **spirit that does not come across** (C1, E1)
+
+Items asking the docs to cover a topic — async, Celery, caching, auth, events,
+a second web framework — are struck. They are good practices a project needs,
+not rules GLIMPSE has; writing them is how a five-minute idea becomes a book.
+Struck items are marked **Out of scope** and left in place, so the same list
+does not get rediscovered and rewritten in six months.
+
 ## A — Blockers: cannot start without guessing
 
 - [x] **A1. Configuration has no story outside Django.** `edges` is two-way
@@ -115,33 +136,37 @@ project hits them, not by effort.
     point, since structure is earned and a young project should not look like a
     grown one. Reading vekna to write it produced G1–G3.
 
-## G — Raised by vekna, which the reference does not describe
+## G — Raised by vekna
 
-- [ ] **G1. Layers inside a self-contained package are undocumented.** vekna
+- [x] **G1. Layers inside a self-contained package are undocumented.** vekna
   runs GLIMPSE twice: ordinary layer packages at the root, and the same seven
-  layers again inside each component (`lexicon/_pacts.py`,
-  `folio/shell/_links.py`) — one underscored module per layer, promoted to a
-  package when it earns it, with the component's `__init__.py` as its one
-  public door. The reference assumes exactly one set of layers per project, so
-  a reader who opens vekna concludes the docs are wrong. Either name the
-  variant and its trigger (a plugin architecture; a component that must not be
-  importable from the rest), or say the reference covers the single-scale case
-  only. `examples.md` currently carries a note doing the latter.
+  layers again inside each component, one underscored module per layer.
 
-- [ ] **G2. Wildcard contracts for a repeated layer set are not in the Import
+    **Out of scope — this was the finding that exposed the bad premise.** The
+    arrangement followed a need and breaks no import rule, so it is creative
+    use, not an undocumented variant owed a page. Documenting every legitimate
+    shape is unbounded work. Answered generally instead: *[What is fixed, and
+    what is guidance](docs/index.md)* on the home page, the same paragraph
+    in `SKILL.src.md` so the skill stops treating silence as violation, and a
+    note on the vekna entry in `examples.md`.
+
+- [x] **G2. Wildcard contracts for a repeated layer set are not in the Import
   Linter guide.** vekna enforces the inner layering with
-  `source_modules = ["vekna.folio.*._mills"]`, plus package-boundary contracts
-  (a folio may not import another folio; the root may not import the lexicon) —
-  31 in total. The guide shows one flat set and nothing about composing
-  contracts at two scales. Depends on the G1 ruling.
+  `source_modules = ["vekna.folio.*._mills"]`, plus package-boundary contracts,
+  31 in total.
+
+    **Out of scope**, with G1 — a project's own contracts are its own. The
+    guide teaches how the contracts express the rules; it is not a cookbook of
+    every topology.
 
 - [ ] **G3. `inits` may import `specs` in vekna.** Its layer table grants
   `inits` → `pacts, specs, mills, links, gates`; the reference forbids
   `inits` → `specs`, and the published contract set encodes that. One of the
-  two is wrong. (Unrelated but adjacent: vekna's architecture doc calls "gates
-  may import only pacts" *stricter than textbook GLIMPSE* — the reference has
-  since moved to exactly that rule, so that half has converged and the note is
-  stale rather than divergent.)
+  two is wrong. Survives the re-triage only because import rules are the fixed
+  part — worth one look, not a page. (Adjacent: vekna's architecture doc calls
+  "gates may import only pacts" *stricter than textbook GLIMPSE*; the reference
+  has since moved to exactly that rule, so that half has converged and the note
+  is stale rather than divergent.)
 
 ## B — Contradictions and bugs in existing text
 
@@ -180,7 +205,7 @@ project hits them, not by effort.
   Every example is a case where the answer was never in doubt. Add one worked
   example of choosing badly and the symptom that reveals it.
 
-- [ ] **C2. Symbol naming is never specified.** `ProposalDTO`,
+- [x] **Optional — C2. Symbol naming is never specified.** `ProposalDTO`,
   `CreateProposalDict`, `ProposalRepositoryProtocol`, `ProposalService`,
   `Repositories`/`Services` are used consistently in every example and stated
   nowhere. The naming table covers directories and axes only; symbols need the
@@ -210,7 +235,19 @@ project hits them, not by effort.
   `total=False`) are not covered at all. Affects: `patterns/index.md#5`,
   `layers/pacts.md`.
 
-## D — Missing topics, ordered by how fast a new project hits them
+## D — Missing topics
+
+**Struck, except D5.** Every item below asks the reference to cover a subject.
+None of them moves a layer boundary or an import rule: an async service is
+still a mill, a Celery task is still an entry point, a cache is still an
+adapter behind a port. A reader with the spirit places them; a reader without
+it is not helped by nine more pages. This is the section that would have turned
+a five-minute idea into a book.
+
+D5 survives because it collides with a stated rule — the facade *is* the public
+surface — rather than asking for new coverage.
+
+Kept below unticked, as the record of what was deliberately not written.
 
 - [ ] **D1. Background jobs / task queues.** Celery, RQ, cron. Presumably
   `gates/{port}/{adapter}`, but "port = delivery mechanism" plus "page = what
@@ -262,8 +299,11 @@ project hits them, not by effort.
 
 ## F — Found by reading a real GLIMPSE CLI against the docs
 
-Deviations in `tingle` that the docs do not sanction. Each is either a missing
-rule or a rule that does not survive contact with a real CLI — decide which.
+**Mostly struck.** These were written as "the docs do not sanction this", which
+is the wrong test — the docs do not have to. F3, F4 and F5 are creative use
+inside the rules, and F2 is trivia. F1 survives only because the port axis is
+stated as a red flag, so it reads as a rule while real code does otherwise:
+worth deciding whether it is a rule or a default, in one line, either way.
 
 - [ ] **F1. Shared code inside a port has no documented home.**
   `gates/cli/render.py` sits at the adapter level but is not an adapter — it is
@@ -272,27 +312,27 @@ rule or a rule that does not survive contact with a real CLI — decide which.
   level below `gates`/`links` is always the port, and below the port always the
   adapter, so both are unplaceable as written.
 
-- [ ] **F2. `__main__.py` belongs to no layer.** tingle keeps
+- [x] **Out of scope — F2. `__main__.py` belongs to no layer.** tingle keeps
   `src/tingle/__main__.py` at the package root, importing `inits.cli.run`. By
   the membership test it is `edges` (the runtime reaches for it, the project
   never does), but `edges` is documented as framework bootstrap and the CLI
   section says the entry point is a `[project.scripts]` string. Name the
   package root as a legitimate place for `__main__.py`, or place it.
 
-- [ ] **F3. A CLI gate gets the whole registry, not its own dependencies.**
+- [x] **Out of scope — F3. A CLI gate gets the whole registry.**
   `layers/inits.md` shows `CliGate(reports=services.reports)`; tingle writes
   `CliGate(Services())` and types the parameter `ServicesProtocol` — the same
   flat namespace a web gate reaches through the request. That is arguably the
   better shape (one wiring convention for both ports), and the docs show the
   other one. Pick one.
 
-- [ ] **F4. A service can be a module.** tingle's `browse` leaf returns the
-  mill module itself, because its functions are pure and hold no dependencies,
+- [x] **Out of scope — F4. A service can be a module.** tingle's `browse` leaf
+  returns the mill module itself: its functions are pure and hold no state,
   so the module already satisfies the protocol. Nothing in the docs suggests a
   service must be a class — but every example is one, so a reader will build a
   stateless wrapper class for nothing.
 
-- [ ] **F5. A dependency can be a class rather than an instance.**
+- [x] **Out of scope — F5. A dependency can be a class rather than an instance.**
   `MetricsService(project_files=LocalProjectFiles, diff_source=GitCli, ...)`
   injects the classes, and the service constructs per call. Undocumented, and
   it changes what the `pacts` protocol has to declare.
