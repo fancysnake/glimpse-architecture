@@ -104,7 +104,7 @@ links/{port}/{adapter}.py                   # e.g. links/db/sqlite.py
 # Grown project
 pacts/{noun}.py                         # or pacts/{noun}/{verb}.py
 pacts/{port}.py                         # port machinery (e.g. pacts/db.py)
-pacts/services.py                       # wiring contracts (ServicesProtocol)
+pacts/services.py                       # ServicesProtocol + service protocols
 mills/{noun}.py                         # or mills/{noun}/{verb}.py
 specs/{noun}.py
 inits/repositories.py                   # a module per registry, plus one that binds
@@ -215,11 +215,15 @@ contract by three questions, in order: (1) tied to a noun? →
 `pacts/{noun}.py` (DTOs, write dicts, domain errors, repo protocols);
 (2) tied to a port? → `pacts/{port}.py` (e.g. `pacts/db.py` for
 `TransactionProtocol` — test: would it survive a total change of business
-domain?); (3) about the wiring? → `pacts/services.py` for `ServicesProtocol`.
+domain?); (3) about the wiring? → `pacts/services.py` for `ServicesProtocol`
+**and the service protocols it names** — that module mirrors `inits/services.py`,
+and a service protocol describes a registry leaf, not the noun its methods
+mention.
 
 **Protocols exist where a boundary needs them, not by policy.** Repository
 protocols: essential — mills depend on them. Service protocols: optional —
-needed for services exposed on the web context (pacts types the namespace) and
+needed for every service on a typed services namespace (web always; a CLI when
+`inits` hands the gate the whole registry rather than individual mills) and
 recommended for service-to-service dependencies. Gate classes: no protocols —
 nothing outside inits refers to them.
 

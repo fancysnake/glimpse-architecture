@@ -50,7 +50,8 @@ DTOs, write TypedDicts, repository protocols, errors. Split by domain concern,
 never by technical kind. Contracts that belong to no noun follow the axis of
 the layer they serve — `pacts/{port}.py` for port machinery
 (`TransactionProtocol`), a module mirroring the `inits` registry for wiring
-contracts (`pacts/services.py`). See the [placement
+contracts (`pacts/services.py` — `ServicesProtocol` and the service protocols
+it names). See the [placement
 algorithm](../layers/pacts.md#slicing-axis).
 
 `pacts` and `mills` share the noun/verb axis, but they are free to promote

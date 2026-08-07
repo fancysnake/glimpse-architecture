@@ -194,11 +194,20 @@ does not get rediscovered and rewritten in six months.
     the only Ludamus term left in the docs; the remaining mentions name the
     project.
 
-- [ ] **B3.** `layers/pacts.md#slicing-axis` — the placement algorithm omits
+- [x] **B3.** `layers/pacts.md#slicing-axis` — the placement algorithm omits
   **service protocols**. Question 1 lists DTOs, write TypedDicts, errors and
   repository protocols; question 3 covers only `ServicesProtocol`. So
   `ProposalServiceProtocol` — required for anything exposed on the request —
   has no assigned home.
+
+    **Done.** `pacts/services.py`, beside the `ServicesProtocol` that names
+    them — the module mirrors `inits/services.py`, so a service protocol
+    describes a registry leaf, not the noun its methods mention. Confirmed by
+    tingle, whose `pacts/services.py` is exactly that. The Django guide's
+    example now shows both protocols, and one adjacent claim was corrected: the
+    docs said CLI projects skip service protocols entirely, but a CLI needs
+    them whenever `inits` hands the gate the whole registry (as tingle does)
+    rather than individual mills.
 
 - [ ] **B4.** `layers/pacts.md` — "depends on nothing" is stated absolutely and
   then followed by Pydantic models. Add the clause: no *project* modules.

@@ -40,12 +40,17 @@ the decoupling `mills` is built on. Service protocols are optional; their
 consumers are `inits` (which knows the concrete classes by design) and gates.
 Two cases earn one:
 
-- **Web context typing** — `ServicesProtocol` types the services namespace on
-  the request, and it lives in `pacts`, which imports nothing — so every
-  service exposed on the web context needs a protocol here. CLI projects
-  (constructor injection, no context) skip this entirely.
+- **A typed services namespace** — `ServicesProtocol` types the namespace a
+  gate reaches through, and it lives in `pacts`, which imports nothing, so
+  every service on that namespace needs a protocol here. Web projects always
+  have one, attached to the request. A CLI has one too if `inits` hands the
+  gate the whole registry; a CLI that injects individual mills into a
+  constructor needs none of this.
 - **Service-to-service dependencies** — recommended, not mandatory: referencing
   the other service through a protocol keeps the coupling narrow.
+
+Both kinds live in `pacts/services.py`, beside the `ServicesProtocol` that
+names them — see the [placement algorithm](#slicing-axis).
 
 Gate classes get no protocols — nothing outside `inits` refers to them.
 
@@ -92,8 +97,11 @@ order:
    `TransactionProtocol` and `DatabaseConstraintError`. The test: would the
    contract survive a total change of business domain? Then it belongs to the
    port.
-3. **About the wiring?** → `pacts/services.py`, holding `ServicesProtocol` —
-   the contract that types the services namespace a gate sees.
+3. **About the wiring?** → `pacts/services.py` — `ServicesProtocol`, the
+   contract that types the services namespace a gate sees, **and the service
+   protocols it names**. They sit together because the module mirrors
+   `inits/services.py`: a service protocol describes a leaf of that registry,
+   not the noun its methods happen to mention.
 
 ```text
 pacts.py                         # start here
@@ -103,7 +111,7 @@ pacts/invoices.py
 pacts/invoices/issue.py          # cut by verb when invoices grows fat
 pacts/invoices/refund.py
 pacts/db.py                      # port — TransactionProtocol
-pacts/services.py                # wiring — ServicesProtocol
+pacts/services.py                # wiring — ServicesProtocol + service protocols
 ```
 
 Split by **domain concern, port, or wiring** — never by technical kind, and

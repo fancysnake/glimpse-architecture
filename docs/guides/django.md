@@ -348,9 +348,17 @@ import `inits`:
 from typing import Protocol
 
 
+class ProposalServiceProtocol(Protocol):
+    def get(self, pk: int) -> ProposalDTO: ...
+
+
 class ServicesProtocol(Protocol):
     proposals: ProposalServiceProtocol
 ```
+
+The service protocols live in this module too, beside the namespace that names
+them: each describes a leaf of `inits/services.py`, not the noun its methods
+mention.
 
 This split — contract in `pacts`, framework-typed carrier in the gate — keeps
 `pacts` framework-free and is what every service exposed on the request pays

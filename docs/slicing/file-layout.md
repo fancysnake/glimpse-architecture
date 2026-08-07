@@ -11,7 +11,7 @@ pacts.py                                 # start here
 pacts/{noun}.py
 pacts/{noun}/{verb}.py
 pacts/{port}.py                          # port machinery, e.g. pacts/db.py
-pacts/services.py                        # wiring contracts (ServicesProtocol)
+pacts/services.py                        # ServicesProtocol + service protocols
 
 specs.py
 specs/{noun}.py
