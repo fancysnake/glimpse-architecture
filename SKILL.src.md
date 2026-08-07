@@ -352,8 +352,11 @@ hatches, not invitations.
     (flat, zero-arg `Services()` builds its own dependencies — no DI inside
     the composition root). Lifetimes: `@cached_property` = per container
     (per request); `@functools.lru_cache` on a module-level inits factory =
-    per process (pooled clients, connections). See **Growing rules** for when
-    to bucket.
+    per process (pooled clients, connections). Closing follows the owner: a
+    process-lifetime connection is wound down in inits (often nothing to
+    write — exit does it); one opened mid-flight is closed by a context manager
+    the link exposes, like `TransactionProtocol`. See **Growing rules** for
+    when to bucket.
 11. **Protocol implementations declare the protocol as a base class** — where
     a protocol exists — so the intent is explicit and a type checker verifies
     conformance. This assumes one runs: an explicit `Protocol` subclass

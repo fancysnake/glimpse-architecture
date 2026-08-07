@@ -134,6 +134,15 @@ class Repositories:
 `@cached_property` opens it lazily on first use; constructing it eagerly while
 composing the graph is equally valid and doubles as a startup sanity check.
 
+Closing follows whoever owns the lifetime. A connection opened with the process
+dies with it, so whatever winds it down sits in `inits` beside what opened it —
+and on a short run there is often nothing to write, since exit does the job.
+
+A connection opened mid-flight is not `inits`' to close. The link exposes a
+context manager that opens and closes it around the work, the way
+`TransactionProtocol` wraps a transaction, and what calls it never handles the
+lifetime.
+
 Lifetimes are the same idiom at two scopes: `@cached_property` on a registry =
 one per container (per request, on the web); `@functools.lru_cache` on a
 module-level factory = one per process. A leaf that needs a process-lifetime

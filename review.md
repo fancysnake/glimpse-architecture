@@ -297,10 +297,18 @@ does not get rediscovered and rewritten in six months.
     somebody else's job. A link earns its place even as a one-line wrapper,
     because it names an external capability, not a line count.
 
-- [ ] **C5. Who closes the connection?** `inits`' contents list "opening and
+- [x] **C5. Who closes the connection?** `inits`' contents list "opening and
   closing connections"; only opening is ever shown. Needed for the sqlite CLI
   (process end) and for the web (per request). Affects:
   `layers/inits.md#connections-and-lifetimes`.
+
+    **Done.** Closing follows whoever owns the lifetime. A connection opened
+    with the process dies with it, so the wind-down sits in `inits` beside what
+    opened it — and on a short run there is often nothing to write, because
+    exit does it. A connection opened mid-flight is not `inits`' to close: the
+    link exposes a context manager that opens and closes it around the work,
+    the way `TransactionProtocol` wraps a transaction, and the caller never
+    handles the lifetime.
 
 - [ ] **C6. Why TypedDict for writes and Pydantic for reads?** Asserted in
   three places, never justified. And partial updates (`UpdateXDict`,
