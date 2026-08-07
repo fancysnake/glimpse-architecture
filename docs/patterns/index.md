@@ -2,8 +2,9 @@
 
 !!! warning "Status: 0.1 — conventions may still shift"
 
-These patterns describe how GLIMPSE layers collaborate at runtime. They are
-conventions enforced by code review, not by importlinter.
+These patterns describe how GLIMPSE layers collaborate at runtime. Where one
+shows up as an import, the linter catches it; most are calls rather than
+imports, and those hold by code review.
 
 ## Patterns
 
@@ -63,11 +64,12 @@ class ProposalService:
 This is the interface segregation principle at the service boundary. `inits`
 knows the concrete classes and does the wiring.
 
-### 4. Mills are framework-free
+### 4. Mills have no side-effect imports
 
-`mills` must not import an ORM, an HTTP layer, or a CLI parser. It sees only
-protocols and DTOs from `pacts` and constants from `specs`. If a test for a mill
-requires a live database, the mill has leaked infrastructure.
+No ORM, no HTTP layer, no CLI parser, no settings access. A mill sees protocols
+and DTOs from `pacts`, constants from `specs`, and pure helpers from anywhere —
+[package names are not the test](../layers/mills.md). If a mill's test needs a
+live database, the mill has leaked infrastructure.
 
 ### 5. Writes use TypedDicts
 
@@ -131,17 +133,12 @@ concrete class.
 
 ### 9. DTOs must be constructible from a store row
 
-Every DTO in `pacts` must be buildable from what `links` loaded. Pydantic is
-not required — a dataclass, a `NamedTuple`, or an attrs class is a DTO too, and
-construction is then a plain call (`ProposalDTO(**dict(row))`). With Pydantic
-the spelling follows the store: attribute rows (an ORM instance) need
-`model_config = ConfigDict(from_attributes=True)`, so the repository can do
-`ProposalDTO.model_validate(row)`; mapping rows (`sqlite3.Row`, a dict cursor)
-need no config at all — `ProposalDTO.model_validate(dict(row))`.
-
-A row that does not match the DTO — renamed columns, a join, an aggregate — is
-mapped by a private helper on the repository, in `links`, never by a method on
-the DTO. The mapping is the adapter's, and a second adapter maps differently.
+Every DTO in `pacts` must be buildable from what `links` loaded, whichever DTO
+library the project picked — Pydantic is not required. A row that does not
+match the DTO is mapped by a private helper on the repository, in `links`,
+never by a method on the DTO: the mapping is the adapter's, and a second
+adapter maps differently. Spellings per store: [DTO
+requirements](../layers/pacts.md#dto-requirements).
 
 ### 10. Registries are flat @cached_property trees
 
@@ -151,23 +148,16 @@ until they cross ~12 leaves — see [Growing rules](../slicing/growing.md).
 
 ### 11. Protocol implementations declare the protocol as a base class
 
-Where a protocol exists, its implementation names it as a base class — the
-intent is explicit and the type checker verifies conformance, instead of
-leaving it to a structural match that can silently drift. (Not every class has
-a protocol — see
-[pacts](../layers/pacts.md#protocols-exist-where-a-boundary-needs-them).)
-
 ```python
 class ProposalRepository(ProposalRepositoryProtocol):
     ...
 ```
 
-This assumes a type checker runs. Subclassing a `Protocol` explicitly inherits
-its stub bodies, so an unimplemented method returns `None` at runtime instead
-of failing — the checker is what turns the declaration into a check.
-
-The exception is very generic structural protocols — `TransactionProtocol`,
-callbacks — with multiple unrelated duck-typed implementations.
+Where a protocol exists, its implementation names it as a base class — see
+[pacts](../layers/pacts.md#implementations-declare-the-protocol-as-a-base-class)
+for the rule and its exception. The declaration is only a check if a type
+checker runs: subclassing a `Protocol` inherits its stub bodies, so an
+unimplemented method returns `None` at runtime instead of failing.
 
 ### 12. Domain errors are caught at the call-site
 

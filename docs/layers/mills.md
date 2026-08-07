@@ -100,15 +100,10 @@ fine and which are smells.
 
 ## Boundary vs core — what belongs here
 
-Decide by what the code *does*:
-
-- It **crosses a boundary** (a data shape moving between layers) → it is a
-  contract → `pacts`
-- It **enforces business rules** (service logic, invariants) → it is core →
-  `mills`
-
-DTOs stay in `pacts` even though they feel like domain objects — see
-[pacts](pacts.md) for the circular-import argument.
+Code that **enforces business rules** is core, and core is `mills`. Code that
+**crosses a boundary** is a contract, and contracts are `pacts` — including
+DTOs, which feel like domain objects and are not. See [boundary vs
+core](pacts.md#boundary-vs-core-what-belongs-here).
 
 ## Slicing axis
 

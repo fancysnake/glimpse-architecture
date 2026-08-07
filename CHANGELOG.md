@@ -125,8 +125,24 @@ and this project adheres to [Semantic Versioning].
 - Class-based views are no longer presented as the recommended Django shape;
   that is a framework choice, not a GLIMPSE one
 
+### Fixed
+
+- `specs` no longer sends a constant a second layer needs to `edges`. It is
+  either a contract (`pacts`) or configuration, which enters at `inits` — the
+  layers overview was the last page still saying otherwise
+- `gates` is imported by `inits` on a CLI, which the gates page recorded as
+  "depended on by nothing"
+- Patterns are no longer described as review-only: where one shows up as an
+  import, the linter catches it
+- The day-one tree on the layers overview no longer carries an `edges/`
+  directory the CLI it describes does not have
+
 ### Removed
 
+- Repetition, roughly 300 lines of it. `SKILL.md` stated the file-layout
+  patterns three times and the adapter rules twice — once inline, once through
+  the shared `rules/` fragments; "boundary vs core" was spelled out on three
+  docs pages. Each rule now has one home, and the other places point at it
 - **The pacts/mills symmetry rule.** The two layers share the noun/verb axis
   but promote independently — `mills/` may be a package while `pacts.py` is
   still one file. Nothing enforced the rule and nothing depended on it; in

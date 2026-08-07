@@ -11,10 +11,10 @@ providers, email services, object storage. The rest of the system talks to
 | | |
 | --- | --- |
 | **Depends on** | pacts, ORM / driver / SDK internals |
-| **Depended on by** | inits (wired into gates via DI) |
+| **Depended on by** | inits |
 
-`gates` never imports from `links` directly. `inits` constructs the concrete
-implementations and injects them.
+Neither `gates` nor `mills` ever imports `links`. `inits` constructs the
+concrete implementations and injects them where they are needed.
 
 ## What it contains
 

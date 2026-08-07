@@ -160,8 +160,9 @@ The three `independence` contracts guard the axis below the layer. Ports do not
 know about each other — a `web` gate never imports from `cli`, a `db` adapter
 never imports from `payment_api`; anything two ports share is a contract in
 `pacts`, wired in `inits`. Inside `edges`, `wsgi.py`, `asgi.py`, `manage.py`,
-and `settings/` are each reached by the runtime on their own. A split settings
-package is unaffected — `edges.settings.production` importing
+and `settings/` are each reached by the runtime on their own.
+
+A split settings package is unaffected: `edges.settings.production` importing
 `edges.settings.base` happens *inside* one listed module. Wildcards in contract
 modules need import-linter 2.0 or newer.
 

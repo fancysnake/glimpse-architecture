@@ -205,13 +205,8 @@ and expects the next run to disagree with it out loud.
 
 ## Growing the registries
 
-Stay flat while a registry has ≤12 leaves. At 13 or more, introduce a sub-bucket
-grouped by noun or verb, and flatten back if the count drops. A bucket must
-hold at least two leaves before the folder exists. (No GLIMPSE project has
-crossed the threshold yet — the bucketed calling convention is a prediction,
-not practice.)
-
-See [Growing rules](../slicing/growing.md).
+Stay flat while a registry has ≤12 leaves; past that, bucket by noun or verb —
+see [Growing rules](../slicing/growing.md#12-public-symbols-per-namespace-level).
 
 ## Slicing axis
 

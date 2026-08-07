@@ -11,7 +11,7 @@ mechanism (HTTP, CLI) but delegates all domain logic to `mills`.
 | | |
 | --- | --- |
 | **Depends on** | pacts |
-| **Depended on by** | nothing (entry point) |
+| **Depended on by** | nothing on the web — the framework dispatches; `inits` imports gate classes on a CLI |
 
 `pacts` is the only project code a gate imports — not `links`, and not `mills`
 either. A gate calls services through the protocols `pacts` declares, and

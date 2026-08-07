@@ -42,7 +42,7 @@ derive the rest for the project in front of you.
 ```text
 pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
 specs   Business invariants (pure constants, no IO). Only for mills.
-mills   Business logic, services. Depends on pacts + specs. No framework, no ORM.
+mills   Business logic, services. Depends on pacts + specs. No side effects.
 links   Repositories, external clients. Depends on pacts + ORM / driver / SDK.
 gates   Entry points: request handlers, forms, routing, CLI commands. Depends on pacts.
 inits   DI container, middleware. The only layer where gates, mills, and links meet.

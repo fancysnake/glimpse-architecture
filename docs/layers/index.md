@@ -48,8 +48,9 @@ nothing dispatches (CLI), `inits` imports the gate classes and composes them
 directly.
 
 `specs` sits between `mills` and `pacts` and has exactly one consumer. `links`,
-`gates`, and `inits` must never import it — a constant they need is either
-configuration (`edges`) or a contract (`pacts`).
+`gates`, and `inits` must never import it — a constant they need is either a
+contract (`pacts`) or configuration, which
+[enters at `inits`](inits.md#configuration-enters-here).
 
 ## Layer summary
 
@@ -86,11 +87,14 @@ myproject/
 ├── links/
 │   └── db/
 │       └── sqlite.py
-├── gates/
-│   └── cli/
-│       └── argparse.py
-└── edges/
+└── gates/
+    └── cli/
+        └── argparse.py
 ```
+
+No `edges/` here: this project is a CLI, so the runtime reaches `inits` by
+dotted string in `pyproject.toml`. `edges/` appears when a framework brings
+settings and a deployment entry point with it.
 
 See [Growing rules](../slicing/growing.md) for what triggers the promotion.
 

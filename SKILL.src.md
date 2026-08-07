@@ -85,47 +85,44 @@ names an external capability.
 
 **No DDD tactical patterns.** GLIMPSE has no aggregates or value objects —
 data moves as DTOs and write TypedDicts; invariants live in service code. The
-slicing axes are GLIMPSE's own — noun, verb, page — not DDD's subdomains and
-bounded contexts. Slice by another axis if it fits the project better.
+slicing axes are GLIMPSE's own (see **Slicing vocabulary**).
 
 ## File layout
 
-**`pacts`, `specs`, `mills`, `inits` start as single modules.** The first three
-are sliced by noun, and on day one you have one `mills.py` — don't plan further
-ahead. `inits` stays thin whatever the project does, so split it however is
-convenient. Begin with `mills.py`; promote to `mills/` when it earns it (see
-**Growing rules**).
-
-**`links` and `gates` are packages from day one.** Their first axis is the port,
-and the port is knowable before a line is written — you know you are building a
-CLI, you know you are talking to a database. Skipping the axis means renaming
-every import the day a second adapter appears.
+**`pacts`, `specs`, `mills`, `inits` start as single modules; `links` and
+`gates` are packages from day one.** The first three are sliced by noun, and on
+day one you have one `mills.py` — don't plan further ahead. `inits` stays thin
+whatever the project does, so split it however is convenient. `links` and
+`gates` take the port axis immediately: the port is knowable before a line is
+written — you know you are building a CLI, you know you are talking to a
+database — and skipping it means renaming every import the day a second adapter
+appears.
 
 ```text
-# Small project — axis-free layers stay flat
+# Day one — axis-free layers stay flat
 pacts.py
 specs.py
 mills.py
 inits.py
-gates/{port}/{adapter}.py                   # e.g. gates/cli/argparse.py
 links/{port}/{adapter}.py                   # e.g. links/db/sqlite.py
+gates/{port}/{adapter}.py                   # e.g. gates/cli/argparse.py
 
-# Grown project
-pacts/{noun}.py                         # or pacts/{noun}/{verb}.py
-pacts/{port}.py                         # port machinery (e.g. pacts/db.py)
-pacts/services.py                       # ServicesProtocol + service protocols
-mills/{noun}.py                         # or mills/{noun}/{verb}.py
+# Grown
+pacts/{noun}.py                             # or pacts/{noun}/{verb}.py
+pacts/{port}.py                             # port machinery (e.g. pacts/db.py)
+pacts/services.py                           # ServicesProtocol + service protocols
 specs/{noun}.py
-inits/repositories.py                   # a module per registry, plus one that binds
-inits/services.py
-gates/{port}/{adapter}/{page}.py        # or .../{page_group}/{page}.py
+mills/{noun}.py                             # or mills/{noun}/{verb}.py
+inits/repositories.py                       # a module per registry, plus one that binds
+inits/services.py                           # (+ middleware.py on web, cli.py on a CLI)
 links/{port}/{adapter}/{kind}.py            # while small (models.py, repositories.py)
 links/{port}/{adapter}/{kind}/{module}.py   # when {kind} crosses threshold
 links/{port}/{adapter}/__init__.py          # facade — re-exports the public surface
+gates/{port}/{adapter}/{page}.py            # or .../{page_group}/{page}.py,
+gates/{port}/{adapter}/{page}/{subpage}.py  #    or .../{page}/{subpage}.py
 ```
 
-Split a file at ~1000 lines or when two unrelated concerns cause merge friction.
-Never create nested folders before files exist to fill them.
+Thresholds for every promotion above: **Growing rules**.
 
 **`__init__.py` re-export policy.** Default: keep `__init__.py` empty and import
 each symbol from the module that defines it (`from pkg.foo.bar import Bar`, not
@@ -142,18 +139,8 @@ A noun contains verb cuts. A verb cut depends on entities.
 
 ## Slicing rules
 
-**pacts, mills, specs — by noun, then verb. inits — however is convenient.**
-
-```text
-pacts/{noun}.py             # flat while the noun is small
-pacts/{noun}/{verb}.py      # cut by verb when the noun grows fat
-mills/{noun}.py
-mills/{noun}/{verb}.py
-specs/{noun}.py
-inits/repositories.py       # a module per registry class...
-inits/services.py
-inits/middleware.py         # ...plus one that binds it all together
-```
+**pacts, mills, specs — by noun, then verb. links — port / adapter / kind.
+gates — port / adapter / page. inits — however is convenient.**
 
 Each pacts module holds all boundary contracts for that noun or verb cut:
 DTOs, write TypedDicts, repository protocols, errors. Split by domain concern,
@@ -201,58 +188,15 @@ by facilitator or topic: parameters. Switching events or including
 never-accepted meetings: a second use case → a second method. No generic
 query objects through the protocol.
 
-**links — `{port}/{adapter}/{kind}`. gates — `{port}/{adapter}/{page}`.**
-
-```text
-# Smallest — the adapter is one module
-links/db/sqlite.py
-links/payment_api/stripe.py
-
-# Small (default once the kinds separate)
-links/{port}/{adapter}/
-    __init__.py             # facade — public surface
-    kind1.py
-    kind2.py
-
-# Promoted when a kind crosses ~1000 lines
-links/{port}/{adapter}/
-    __init__.py             # facade — unchanged public import path
-    kind1/
-        __init__.py
-        part1.py
-        part2.py
-    kind2/
-        __init__.py
-        part1.py
-        part2.py
-
-gates/cli/argparse.py                     # flat while there is one page
-gates/cli/argparse/{command}.py           # a CLI's pages are its commands
-gates/cli/argparse/{group}/{command}.py   # grouped as the CLI groups them
-gates/web/{adapter}/{page}.py             # or {page_group}/{page}.py,
-gates/web/{adapter}/{page}/{subpage}.py   # or {page}/{subpage}.py — as the site is
-```
-
-The `kind` axis and the split philosophy are per-adapter — a `db` adapter is
-not the universal template. For a `db` adapter, the kinds are typically
-`models` (internal) and `repositories` (public, exposed through the facade
-and consumed via the protocols in `pacts`); a `payment_api/stripe` adapter
-may stay a single file, or split into transport / types / signer with no
-internal-vs-public distinction. **Baseline across adapters: halve, don't
-shard; arrange parts so they don't cause circular imports.** The public
-face of any `links` adapter is whatever its facade re-exports — internal
-modules stay internal. For a `db` adapter specifically, that means external
-code does `from myproject.links.db.postgres import SessionRepository` and
-never reaches `models`.
-
-One port can have multiple adapters — usually **coexisting**, not
-interchangeable: `payment_api/stripe` and `payment_api/paypal` are both wired
-and both live, and a mill decides per operation which to call. Genuine
-substitution (`db/postgres` vs `db/sqlite`) is the rarer case — one adapter
-wired per deployment, chosen in `inits`. One technology can serve multiple
-ports: a full-stack framework that ships both an ORM and a request layer
-appears as `db/{framework}` and `web/{framework}` — two separate adapters that
-share nothing but a name.
+**A `links` adapter's kinds are its own** — a `db` adapter is not the universal
+template. For `db`, the kinds are typically `models` (internal) and
+`repositories` (public, exposed through the facade and consumed via the
+protocols in `pacts`); a `payment_api/stripe` adapter may stay a single file, or
+split into transport / types / signer with no internal-vs-public distinction.
+The public face of any `links` adapter is whatever its facade re-exports —
+internal modules stay internal, so external code does `from
+myproject.links.db.postgres import SessionRepository` and never reaches
+`models`.
 
 `pacts` and `mills` share the noun/verb axis, but nothing requires them to
 promote in lockstep — `mills/` may be a package while `pacts.py` is still one
@@ -267,13 +211,10 @@ demand it.
 
 Concrete thresholds — none is a hard line, all are "watch for this":
 
-- **A layer becomes a package when it earns it.** `pacts`, `specs`, `mills`, and
-  `inits` start as single modules. Promote `mills.py` → `mills/` on any one of:
-  it crosses ~1000 lines, two unrelated concerns in it cause merge friction, or
-  a second noun genuinely exists. Not before. `inits` typically promotes into
-  `repositories.py` / `services.py` (+ `middleware.py`), but it stays thin
-  either way, so the split is a convenience call. `links` and `gates` are
-  packages from the start — their port axis is known up front.
+- **A layer becomes a package when it earns it.** Promote `mills.py` → `mills/`
+  on any one of: it crosses ~1000 lines, two unrelated concerns in it cause
+  merge friction, or a second noun genuinely exists. Not before. `inits` is a
+  convenience call either way — it stays thin whatever it holds.
 - **~1000 lines per file** — split a file when it crosses this and the two
   halves are unrelated enough that they cause merge friction. A 1500-line file
   holding one tightly coupled service is fine; a 600-line file holding three
@@ -320,8 +261,7 @@ hatches, not invitations.
    injecting it is idiomatic. ISP at the service boundary: declare the
    two-or-three protocols actually used.
 4. **Mills have no side-effect imports.** Only protocols and DTOs from pacts,
-   constants from specs, pure helpers from anywhere. No ORM, no HTTP, no CLI
-   parser, no settings access.
+   constants from specs, pure helpers from anywhere (see **Layers**).
 5. **Writes use TypedDicts.** DTOs for reads, TypedDicts for writes — gates →
    mills as input, mills → links as what repo write methods accept
    (`create(data: CreateProposalDict) -> ProposalDTO`; a `CreateXDict` has no

@@ -19,15 +19,10 @@ noun
 
 ## Boundary vs core
 
-Before choosing a layer, decide what the code *does*:
-
-- It **crosses a boundary** — a data shape moving between layers → it is a
-  contract → `pacts`
-- It **enforces business rules** — service logic, invariants → it is core →
-  `mills`
-
-The classic case is DTOs: they feel like domain objects but stay in `pacts` —
-see [pacts](../layers/pacts.md) for the circular-import argument.
+Place the code before slicing it. Code that crosses a boundary is a contract
+and goes to `pacts`; code that enforces business rules is core and goes to
+`mills`. DTOs are the case that trips people — see [boundary vs
+core](../layers/pacts.md#boundary-vs-core-what-belongs-here).
 
 ## Slicing rules by layer
 
@@ -60,10 +55,9 @@ Each layer splits when its own size or friction says so.
 
 ### inits — however is convenient
 
-`inits` stays thin: even the largest project on GLIMPSE keeps the whole layer
-under a thousand lines. There is no axis to get right. Start as a single
-module, and when one file stops being comfortable, split it the obvious way —
-a module per registry class, plus one that binds everything together:
+There is no axis to get right: `inits` is thin by construction and stays thin.
+Start as a single module; when one file stops being comfortable, split it the
+obvious way — a module per registry class, plus one that binds them.
 
 ```text
 inits.py                 # start here
@@ -72,8 +66,8 @@ inits/services.py
 inits/middleware.py
 ```
 
-Nothing rides on those names; pick what reads best for the project. See
-[inits](../layers/inits.md).
+Nothing rides on those names; pick what reads best. See
+[inits](../layers/inits.md#slicing-axis).
 
 ### links — port / adapter / kind
 
@@ -120,7 +114,6 @@ gates/web/flask/checkout/payment.py      # page group / page
 gates/web/flask/proposal/comments.py     # page / subpage
 ```
 
-This axis replaced an earlier noun-based one, which did not survive contact
-with real URLs: plenty of pages belong to no single noun, and forcing one on
-them dragged business vocabulary into the interface. A gate's job is to mirror
-what the user sees.
+The axis is the interface, never the domain: plenty of pages belong to no
+single noun, and forcing one on them drags business vocabulary into the
+interface. A gate's job is to mirror what the user sees.

@@ -22,7 +22,7 @@
 
 **A catch-all verb module**
 : `manage.py`, `organize.py`, `misc.py` inside a noun. A verb cut must name a
-  real activity — if you cannot name one, the noun is not too big yet.
+  real activity.
 
 **A noun axis inside gates**
 : `gates/web/django/invoices.py` when the interface has no such page. Gates
@@ -32,12 +32,10 @@
 **`common`, `shared`, `utils`, or `entities` as a module or folder name**
 : Magnets for unrelated code. Each says where a file sits, not what it holds,
   so anything can be filed there and nothing can ever be found. Shared types go
-  to `pacts` — a contract two nouns share stays with the noun that needed it
-  first, and earns its own module named after the thing it is (`pacts/money.py`)
-  once the sharing makes the case. Everything else takes a name from the axis it
-  belongs to. The
-  exception is a real concept that happens to carry the word — a `DOMEntity` in
-  a browser-port adapter earns `entities.py`; a bag of dataclasses does not.
+  to `pacts`, under the noun that needed them first; everything else takes a
+  name from the axis it belongs to. The exception is a real concept that
+  happens to carry the word — a `DOMEntity` in a browser-port adapter earns
+  `entities.py`; a bag of dataclasses does not.
 
 ### pacts
 
@@ -51,12 +49,10 @@
   under the noun / port / wiring axes.
 
 **A DTO that cannot be built from a store row or ORM instance**
-: Repositories cannot return it. With Pydantic (not required — a dataclass,
-  `NamedTuple`, or attrs class is a DTO too), attribute rows (an ORM instance)
-  need `model_config = ConfigDict(from_attributes=True)`; mapping rows
-  (`sqlite3.Row`, a dict cursor) validate straight from `dict(row)`. A row that
-  does not match the DTO is mapped in the repository, not by a method on the
-  DTO.
+: Repositories cannot return it. Whatever the project uses for DTOs — Pydantic
+  is not required — construction has to work from the row the adapter loaded.
+  A row that does not match the DTO is mapped in the repository, not by a
+  method on the DTO.
 
 **A protocol implementation that does not name the protocol as a base class**
 : The conformance check is left to a structural match that can silently drift.
@@ -67,11 +63,10 @@
 
 **specs imported from links, gates, or inits**
 : `specs` are business invariants, and business rules are enforced in `mills`
-  alone. A constant needed elsewhere is either a contract (`pacts`) or
-  configuration — which enters at `inits`, or comes from the framework's
-  settings accessor where there is one. A value more than one layer must
-  enforce (a max length, an allowed range) is a fact about the shape of the
-  data, so it belongs beside the contract it constrains, never here.
+  alone. A constant needed elsewhere is either a contract (`pacts` — a max
+  length or an allowed range is a fact about the shape of the data, and belongs
+  beside the contract it constrains) or configuration, which enters at `inits`
+  or comes from the framework's settings accessor where there is one.
 
 **specs reading from `os.environ` or `settings`, or performing IO**
 : It is a constants layer. Environment-dependent values enter at `inits`.
