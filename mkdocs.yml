@@ -1,5 +1,5 @@
 site_name: GLIMPSE Architecture
-site_url: https://fancysnake.github.io/glimpse-architecture/
+site_url: https://glimpse.fancysnake.dev/
 site_description: A framework-agnostic clean architecture pattern for Python projects
 repo_url: https://github.com/fancysnake/glimpse-architecture
 repo_name: fancysnake/glimpse-architecture

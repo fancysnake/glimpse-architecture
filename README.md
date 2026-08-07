@@ -6,7 +6,7 @@ A framework-agnostic clean architecture pattern for Python projects. Seven named
 layers with strict, enforced import rules — the name is the layers: **G**ates,
 **L**inks, **I**nits, **M**ills, **P**acts, **S**pecs, **E**dges.
 
-**Documentation:** <https://fancysnake.github.io/glimpse-architecture/>
+**Documentation:** <https://glimpse.fancysnake.dev/>
 
 ## Local development
 
