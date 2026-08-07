@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning].
   migrations placement, `ROOT_URLCONF`, `admin.py` next to models,
   framework-owned surfaces (`request.user`, `django_login`), no `ModelForm`
 - Importlinter contracts for both directions of `edges` isolation
+- The DTO construction rule spelled for non-ORM stores: attribute rows need
+  `from_attributes=True`, mapping rows (`sqlite3.Row`, a dict cursor) validate
+  from `dict(row)` with no config. A row that does not match the DTO is mapped
+  in the repository, never by a method on the DTO
 - Where configuration comes from: it enters at `inits`, which passes each
   value to the leaf that needs it. A framework's settings singleton is the
   exception and the reason `edges` exists — reading `django.conf.settings`

@@ -28,13 +28,21 @@ project hits them, not by effort.
     `rules/red-flags.md` stops sending stray constants to `edges`, and
     `SKILL.src.md` carries the rule.
 
-- [ ] **A2. The day-one stack contradicts the DTO rule.** Day one is
+- [x] **A2. The day-one stack contradicts the DTO rule.** Day one is
   `links/db/sqlite.py`, but "constructible from a store row" is spelled
   `ConfigDict(from_attributes=True)`, and `sqlite3.Row` has no attribute
   access. The first repository a reader writes cannot follow the rule as
   written. Document the non-ORM path (`row_factory`, `model_validate(dict(row))`,
   or explicit construction). Affects: `layers/pacts.md`, `patterns/index.md#9`,
   `rules/red-flags.md`.
+
+    **Done.** The rule was right; only its spelling was ORM-shaped. It now
+    reads "constructible from what the adapter loaded", with the spelling
+    following the store: `from_attributes=True` for attribute rows,
+    `model_validate(dict(row))` — no config at all — for mapping rows. A row
+    that does not match the DTO is mapped by a private helper on the
+    repository, in `links`, never by a method on the DTO: the mapping is the
+    adapter's, and a second adapter returning the same DTO maps differently.
 
 - [ ] **A3. Is Pydantic mandatory?** The pitch is framework-agnostic; DTOs are
   specified as Pydantic models and the red flag is phrased in Pydantic config.

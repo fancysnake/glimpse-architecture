@@ -48,8 +48,11 @@
   under the noun / port / wiring axes.
 
 **A DTO that cannot be built from a store row or ORM instance**
-: Repositories cannot return it. With Pydantic that means
-  `model_config = ConfigDict(from_attributes=True)`.
+: Repositories cannot return it. With Pydantic, attribute rows (an ORM
+  instance) need `model_config = ConfigDict(from_attributes=True)`; mapping
+  rows (`sqlite3.Row`, a dict cursor) validate straight from `dict(row)`. A row
+  that does not match the DTO is mapped in the repository, not by a method on
+  the DTO.
 
 **A protocol implementation that does not name the protocol as a base class**
 : The conformance check is left to a structural match that can silently drift.

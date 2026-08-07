@@ -125,13 +125,15 @@ concrete class.
 
 ### 9. DTOs must be constructible from a store row
 
-Every DTO in `pacts` must be buildable from what `links` loaded. With Pydantic:
+Every DTO in `pacts` must be buildable from what `links` loaded. With Pydantic
+the spelling follows the store: attribute rows (an ORM instance) need
+`model_config = ConfigDict(from_attributes=True)`, so the repository can do
+`ProposalDTO.model_validate(row)`; mapping rows (`sqlite3.Row`, a dict cursor)
+need no config at all — `ProposalDTO.model_validate(dict(row))`.
 
-```python
-model_config = ConfigDict(from_attributes=True)
-```
-
-This lets repositories do `ProposalDTO.model_validate(row)`.
+A row that does not match the DTO — renamed columns, a join, an aggregate — is
+mapped by a private helper on the repository, in `links`, never by a method on
+the DTO. The mapping is the adapter's, and a second adapter maps differently.
 
 ### 10. Registries are flat @cached_property trees
 

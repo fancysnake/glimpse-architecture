@@ -114,12 +114,22 @@ pacts/core.py          # wrong — a common/ bucket wearing a nicer name
 
 ## DTO requirements
 
-Every DTO must be constructible from a store row or ORM instance, so that
-`links` can turn what it loaded into a contract. With Pydantic that means:
+Every DTO must be constructible from what the adapter loaded, so that `links`
+can turn a store row into a contract. With Pydantic the spelling follows the
+store:
 
 ```python
+# attribute rows — an ORM instance
 model_config = ConfigDict(from_attributes=True)
+InvoiceDTO.model_validate(row)
+
+# mapping rows — sqlite3.Row, a dict cursor: no config needed
+InvoiceDTO.model_validate(dict(row))
 ```
+
+When the row does not match the DTO — renamed columns, a join, an aggregate —
+the mapping is a private helper on the repository, in `links`. It belongs to
+the adapter: a second adapter returning the same DTO maps differently.
 
 ## Designing repository methods
 
