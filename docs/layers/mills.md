@@ -2,51 +2,132 @@
 
 **Purpose:** Business logic and services — framework-free.
 
-`mills` is where domain rules live. It has no knowledge of HTTP, ORM models, or any specific framework. It operates entirely on the contracts defined in `pacts` and calls repositories through the protocols defined there.
+`mills` is where domain rules live. It has no knowledge of HTTP, ORM models, or
+any specific framework. It operates entirely on the contracts defined in `pacts`
+and reaches data through the repository protocols defined there.
 
 ## Depends on / depended on by
 
 | | |
-|---|---|
-| **Depends on** | pacts |
-| **Depended on by** | gates, inits |
+| --- | --- |
+| **Depends on** | pacts, specs |
+| **Depended on by** | inits — gates reach services through `pacts` protocols |
 
-`mills` must never import from Django, SQLAlchemy, or any ORM. If a service needs data access, it receives a UoW or repository via constructor injection.
+"Framework-free" is about **side effects**, not package names. An import is
+forbidden in `mills` if it does IO, touches global state, or owns control flow
+— no ORM, no HTTP machinery, no CLI parser, no settings access. Pure
+computation is fine wherever it comes from: `django.utils.text.slugify` is a
+string function that happens to live in a framework namespace. The test: could
+you copy the function's body into your project and change nothing about your
+design? How strictly to *enforce* the line is a per-project choice — see the
+[Import Linter guide](../guides/import-linter.md#the-mills-framework-contract).
+
+### The clock, an id, a log line
+
+What the rule guards against is **destructive operations and output the
+program depends on** — not everything ambient. Reading the clock, drawing a
+random number, minting a UUID, writing a log line: none of those destroys
+anything, the clock sits there like the CPU sits there, and a log no
+correctness depends on is invisible. Each is mockable when a test needs it
+fixed. None of them makes a mill impure.
+
+Logging still reads better at the edge — a mill raises, and the gate that
+catches decides what to record. That is a preference, not a rule.
+
+Readability is the real test for a generated value. If a timestamp or an id is
+*input* to what the service does rather than something it produces on the way,
+take it as an argument and let the caller make it. When the making is somebody
+else's job, that caller is `inits` handing over a link — and a link earns its
+place even if the wrapper is one line, because what it names is an external
+capability, not a line count.
+
+If a service needs data access, it receives repository protocols via
+constructor injection.
 
 ## What it contains
 
 - Service classes implementing business use cases
-- Domain logic (validation, computation, orchestration)
+- Business invariants, enforced in service code
+- Domain logic (semantic validation, computation, orchestration)
 - Nothing that touches HTTP, templates, forms, ORM models, or framework internals
 
-## Services take UoW via constructor
+GLIMPSE does not prescribe DDD tactical patterns — no aggregate or value-object
+classes are expected. Data moves as DTOs and write TypedDicts from `pacts`;
+the rules live in the services. The slicing axes are GLIMPSE's own — nouns and
+verbs, not subdomains and bounded contexts — see
+[slicing](../slicing/index.md).
+
+## Validation: mills own the meaning
+
+**Gates validate format, mills validate meaning.** A gate checks that input
+parses — an email, an int, a date. A mill checks that it makes sense — "email
+or username required", "no more than `MAX_SESSION_SEATS` seats" (a `specs`
+constant, which only mills may read). The line is not single-field versus
+cross-field; it is parse versus semantics.
+
+## Services take the protocols they use
+
+A service declares the two or three repository protocols it actually needs, plus
+a `TransactionProtocol` if it writes. With an ambient ORM (Django), it does not
+take a whole Unit of Work — that hands the service a surface far wider than its
+job. (With a session-based ORM like SQLAlchemy, the session already *is* a unit
+of work; injecting one there is idiomatic, not a violation.)
 
 ```python
 class InvoiceService:
-    def __init__(self, uow: UnitOfWorkProtocol) -> None:
-        self._uow = uow
+    def __init__(
+        self,
+        invoices: InvoiceRepositoryProtocol,
+        customers: CustomerRepositoryProtocol,
+        transaction: TransactionProtocol,
+    ) -> None:
+        self._invoices = invoices
+        self._customers = customers
+        self._transaction = transaction
 
-    def generate(self, data: CreateInvoiceDict) -> InvoiceDTO:
-        ...
+    def issue(self, data: CreateInvoiceDict) -> InvoiceDTO:
+        with self._transaction.atomic():
+            ...
 ```
 
-The UoW is passed in by `inits` — never imported directly from `links`.
+This is the interface segregation principle applied at the service boundary. The
+concrete implementations are constructed by `inits` — never imported from
+`links`.
+
+Services may call other services when they are reusing real orchestration. See
+[Dependency direction](../patterns/dependency-direction.md) for which calls are
+fine and which are smells.
+
+## Boundary vs core — what belongs here
+
+Code that **enforces business rules** is core, and core is `mills`. Code that
+**crosses a boundary** is a contract, and contracts are `pacts` — including
+DTOs, which feel like domain objects and are not. See [boundary vs
+core](pacts.md#boundary-vs-core-what-belongs-here).
 
 ## Slicing axis
 
-Files are sliced by **subdomain**, then **bounded context** when the subdomain grows. This axis must **mirror `pacts/`** exactly — if `pacts` splits a subdomain into contexts, `mills` must do the same.
+Start as a single `mills.py` module. Promote to a package sliced by **noun**,
+then **verb**, as the layer grows. `pacts` uses the same axis, so the two trees
+tend to look alike — but each promotes on its own schedule, when its own size
+or friction says so.
 
-```
-mills/billing.py
-mills/billing/invoicing.py       # only after pacts/billing/invoicing.py exists
-mills/billing/subscriptions.py
-mills/auth.py
+`mills` mirrors the domain, not the interface. A verb cut names a real
+activity (`issue`, `refund`, `enroll`); if the only name you can find is
+`manage` or `misc`, the file is not too big yet.
+
+```text
+mills.py                         # start here, alongside pacts.py
+
+mills/invoices.py                # promoted when mills.py stops being comfortable
+mills/users.py
+mills/invoices/issue.py          # cut by verb when the noun grows fat
+mills/invoices/refund.py
 ```
 
 ## Red flags
 
-- `mills` importing from Django or any ORM — absolute violation
-- `mills/web/...` or any port axis — `mills` has no delivery-mechanism axis
-- `mills/{entity}.py` holding context-specific write logic — entity-level mills are only for entity-level invariants
-- `mills/` sliced differently than `pacts/` — axes must mirror
-- A single `mills.py` file — `mills` must be a package
+The registry lives in one place: [mills red
+flags](../patterns/index.md#mills), plus [layout and
+slicing](../patterns/index.md#layout-and-slicing) for the entries that cut
+across layers — the port axis and the catch-all verb module.

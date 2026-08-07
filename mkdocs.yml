@@ -1,11 +1,12 @@
 site_name: GLIMPSE Architecture
-site_url: https://fancysnake.github.io/glimpse-architecture/
+site_url: https://glimpse.fancysnake.dev/
 site_description: A framework-agnostic clean architecture pattern for Python projects
 repo_url: https://github.com/fancysnake/glimpse-architecture
 repo_name: fancysnake/glimpse-architecture
 
 theme:
   name: material
+  custom_dir: overrides
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -37,6 +38,8 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.highlight:
       anchor_linenums: true
+  - pymdownx.snippets:
+      base_path: ["."]
   - attr_list
   - def_list
   - toc:
@@ -44,6 +47,8 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Why GLIMPSE: why.md
+  - Projects: examples.md
   - Layers:
     - Overview: layers/index.md
     - pacts: layers/pacts.md
@@ -56,7 +61,12 @@ nav:
   - Slicing:
     - Vocabulary & Rules: slicing/index.md
     - File Layout: slicing/file-layout.md
-  - Patterns & Red Flags: patterns/index.md
+    - Growing Rules: slicing/growing.md
+  - Patterns:
+    - Patterns & Red Flags: patterns/index.md
+    - Request Lifecycle: patterns/lifecycle.md
+    - Dependency Direction: patterns/dependency-direction.md
+    - Testing: patterns/testing.md
   - Guides:
     - Django: guides/django.md
     - Import Linter: guides/import-linter.md

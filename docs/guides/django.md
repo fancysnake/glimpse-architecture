@@ -1,41 +1,92 @@
 # Django Implementation Guide
 
-The layer concepts are framework-agnostic; this page covers the Django-specific details.
+The layer concepts are framework-agnostic. This page covers the Django-specific
+details: Django is a full-stack framework, so it shows up as **two separate
+adapters** — `db/django` for the ORM and `web/django` for the request layer.
+They share a name and nothing else.
 
 ## Project layout
 
-GLIMPSE layers live alongside the Django project package at the root of the repository:
+GLIMPSE layers live alongside the Django project package at the root of the
+repository. A young project keeps the axis-free layers flat:
 
-```
+```text
 myproject/
-├── pacts/
-├── specs/
-├── mills/
+├── pacts.py
+├── specs.py
+├── mills.py
+├── inits.py
 ├── links/
 │   └── db/
-│       └── django/         # ORM models + repository implementations
+│       └── django/         # ORM models, migrations, repositories, admin
 ├── gates/
 │   ├── web/
-│   │   └── django/         # views, forms, URL configurations
+│   │   └── django/         # views, forms, URLs, templates
 │   └── cli/
 │       └── django/         # management commands
-├── inits/                  # DI container + middleware
 └── edges/
     ├── settings/
+    ├── manage.py
     ├── wsgi.py
     └── asgi.py
 ```
 
-The Django project package (containing `settings.py` originally) moves into `edges/`.
+The Django project package (the one that originally held `settings.py`) moves
+into `edges/`, and the project is driven with `python edges/manage.py ...`.
 
-## links — ORM models and repositories
+## Django apps are markers, not structure
 
-Each entity gets its own file in `links/db/django/`:
+Django discovers models, management commands, and templatetags through
+`INSTALLED_APPS`. In GLIMPSE, an app is **not** a unit of code organisation —
+the layers are. An `AppConfig` is a registration marker placed at the lowest
+directory where Django needs to discover something, saying "interesting code
+here" and nothing more.
+
+Every such app needs an `apps.py` with a **custom label**. This is required,
+not style: each GLIMPSE app's dotted name ends in `.django`, so the default
+labels (the last component) would all be `"django"` and collide at startup.
 
 ```python
-# links/db/django/proposal.py
+# links/db/django/apps.py
+class DbLinksConfig(AppConfig):
+    """Configuration for ORM models and migrations."""
+
+    name = "myproject.links.db.django"
+    label = "db_links"
+```
+
+```python
+# gates/cli/django/apps.py
+class CliGatesConfig(AppConfig):
+    """Configuration for CLI management commands."""
+
+    name = "myproject.gates.cli.django"
+    label = "cli_gates"
+```
+
+Register them in `edges/settings/base.py` — dotted strings, consistent with
+[edges' two-way isolation](../layers/edges.md):
+
+```python
+INSTALLED_APPS = [
+    ...,
+    "myproject.links.db.django.apps.DbLinksConfig",
+    "myproject.gates.cli.django.apps.CliGatesConfig",
+    "myproject.gates.web.django.apps.WebGatesConfig",
+]
+```
+
+Migrations live inside the app that owns the models —
+`links/db/django/migrations/` — so schema history never leaves the adapter.
+
+## links/db/django — models and repositories
+
+The adapter is sliced by **kind**, not by entity. Models are internal;
+repositories are the public surface, exposed through the facade.
+
+```python
+# links/db/django/models.py
 from django.db import models
-from pacts.proposals import ProposalDTO, ProposalRepositoryProtocol
 
 
 class Proposal(models.Model):
@@ -44,153 +95,303 @@ class Proposal(models.Model):
 
     class Meta:
         db_table = "proposals"
-
-
-class ProposalRepository:
-    def __init__(self, storage):
-        self._storage = storage
-
-    def get(self, pk: int) -> ProposalDTO:
-        if cached := self._storage.proposals.get(pk):
-            return cached
-        orm = Proposal.objects.get(pk=pk)
-        dto = ProposalDTO.model_validate(orm)
-        self._storage.proposals[pk] = dto
-        return dto
 ```
+
+```python
+# links/db/django/repositories.py
+from myproject.links.db.django.models import Proposal
+from myproject.pacts.proposals import ProposalDTO, ProposalRepositoryProtocol
+
+
+class ProposalRepository(ProposalRepositoryProtocol):
+    def get(self, pk: int) -> ProposalDTO:
+        return ProposalDTO.model_validate(Proposal.objects.get(pk=pk))
+```
+
+```python
+# links/db/django/__init__.py — the facade
+from myproject.links.db.django.repositories import ProposalRepository, UserRepository
+
+__all__ = ["ProposalRepository", "UserRepository"]
+```
+
+Nothing outside the adapter imports `models`. The repository class names its
+protocol as a base class, so the type checker verifies conformance.
+
+!!! note "Django technicality"
+    When `models.py` grows past ~1000 lines and is promoted to a `models/`
+    package, `models/__init__.py` must re-export the model classes — Django
+    discovers models by importing the package. `repositories/__init__.py` can
+    stay empty, because the facade lives at the parent.
 
 ## gates/web/django — views and forms
 
-Views type the request as `RootRequestProtocol` and access data through `request.di.uow`:
+Views annotate the request as `RootRequest` and reach data through a service.
+They never touch a repository. Whether they are class-based or function-based
+is a Django question, not a GLIMPSE one — the example below happens to use a
+class.
 
 ```python
 # gates/web/django/proposals.py
-from django.shortcuts import render
-from pacts.core import RootRequestProtocol
+from django.views import View
+
+from myproject.gates.web.django.request import RootRequest
 
 
-def detail(request: RootRequestProtocol, pk: int):
-    proposal = request.di.uow.proposals.get(pk)
-    return render(request, "proposals/detail.html", {"proposal": proposal})
+class ProposalDetailView(View):
+    request: RootRequest
+
+    def get(self, request: RootRequest, pk: int) -> HttpResponse:
+        proposal = request.services.proposals.get(pk)
+        return render(request, "proposals/detail.html", {"proposal": proposal})
 ```
 
-URL patterns live in the same file or a `urls.py` alongside:
+One module holds one page and its action views — `proposals.py` is the
+proposals page, not the proposals noun. When the sitemap has a section, the
+files get a directory for it (`checkout/payment.py`); the tree follows the
+interface, never `mills`.
+
+URL patterns live in `gates/web/django/urls.py`, named from settings by
+string:
 
 ```python
-from django.urls import path
-from . import proposals
-
-urlpatterns = [
-    path("<int:pk>/", proposals.detail, name="proposal-detail"),
-]
+ROOT_URLCONF = "myproject.gates.web.django.urls"
 ```
+
+Templates and templatetags hang off the same app (`WebGatesConfig`), in the
+standard Django locations inside `gates/web/django/`.
+
+Forms are plain `django.forms.Form` — **never `ModelForm`**, which would drag
+models into a gate. Forms validate format only (an email, an int, a date);
+"does it make sense" is a mill's job. A form whose `clean_*` methods grow
+kilometres of business logic is a gate leaking into `mills`.
 
 ## gates/cli/django — management commands
 
-Management commands live in `gates/cli/django/`. They follow standard Django management command structure but type their dependencies through `pacts` protocols.
+Management commands live in `gates/cli/django/management/commands/`, inside
+the `CliGatesConfig` app — Django only discovers commands in installed apps.
+They call services exactly as views do. The `management/commands/` path is
+Django's, not GLIMPSE's; one file per command still lands one page per module.
 
-```
+```text
 gates/cli/django/
+├── apps.py
 └── management/
     └── commands/
         └── generate_reports.py
 ```
 
-## inits — DI container and middleware
+## mills — services
 
-`inits` constructs the UoW and attaches it to the request:
+A service takes the repository protocols it uses and a `TransactionProtocol`.
+It never imports from `links` and never sees Django's machinery.
 
 ```python
-# inits/container.py
+# mills.py  (or mills/proposals.py once promoted)
+class ProposalService:
+    def __init__(
+        self,
+        proposals: ProposalRepositoryProtocol,
+        audit: AuditRepositoryProtocol,
+        transaction: TransactionProtocol,
+    ) -> None:
+        self._proposals = proposals
+        self._audit = audit
+        self._transaction = transaction
+
+    def publish(self, proposal_id: int) -> None:
+        with self._transaction.atomic():
+            self._proposals.mark_published(proposal_id)
+            self._audit.record(
+                AuditEntryDict(action="publish", entity_id=proposal_id)
+            )
+```
+
+## inits — registries, transaction, middleware
+
+`inits` is the only place that names concrete classes. `Services` takes no
+arguments and builds its own dependencies — inside the composition root there
+are no boundaries to inject across.
+
+```python
+# inits.py  (or inits/repositories.py + inits/services.py once promoted)
+from contextlib import contextmanager
 from functools import cached_property
-from links.db.django.proposal import ProposalRepository
-from links.db.django.user import UserRepository
+
+from django.conf import settings
+from django.db import DataError, IntegrityError, transaction
+
+from myproject.links.crypto.fernet import FernetEncryptor
+from myproject.links.db.django import (
+    AuditRepository,
+    ConnectionsRepository,
+    ProposalRepository,
+    UserRepository,
+)
+from myproject.mills.connections import ConnectionsService
+from myproject.mills.proposals import ProposalService
+from myproject.pacts.db import DatabaseConstraintError
 
 
-class UnitOfWork:
-    def __init__(self):
-        self._storage = Storage()
+class DjangoTransaction:
+    @staticmethod
+    def atomic() -> AbstractContextManager[None]:
+        return transaction.atomic()
 
+    @staticmethod
+    @contextmanager
+    def savepoint() -> Iterator[None]:
+        # A nested savepoint: a constraint violation rolls back only this
+        # block and is re-raised as DatabaseConstraintError, leaving the
+        # surrounding transaction usable.
+        try:
+            with transaction.atomic():
+                yield
+        except (IntegrityError, DataError) as exc:
+            raise DatabaseConstraintError(str(exc)) from exc
+
+
+class Repositories:
     @cached_property
     def proposals(self) -> ProposalRepository:
-        return ProposalRepository(self._storage)
+        return ProposalRepository()
 
     @cached_property
     def users(self) -> UserRepository:
-        return UserRepository(self._storage)
+        return UserRepository()
 
-    def atomic(self):
-        from django.db import transaction
-        return transaction.atomic()
-
-
-class DI:
     @cached_property
-    def uow(self) -> UnitOfWork:
-        return UnitOfWork()
+    def audit(self) -> AuditRepository:
+        return AuditRepository()
+
+    @cached_property
+    def connections(self) -> ConnectionsRepository:
+        return ConnectionsRepository()
 
 
-class DIMiddleware:
+class Services:
+    def __init__(self) -> None:
+        self._repos = Repositories()
+        self._transaction = DjangoTransaction()
+
+    @cached_property
+    def proposals(self) -> ProposalService:
+        return ProposalService(
+            proposals=self._repos.proposals,
+            audit=self._repos.audit,
+            transaction=self._transaction,
+        )
+
+    @cached_property
+    def connections(self) -> ConnectionsService:
+        key: str = settings.CREDENTIALS_ENCRYPTION_KEY
+        return ConnectionsService(
+            self._repos.connections, FernetEncryptor(key), self._transaction
+        )
+
+
+class ServicesMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        request.di = DI()
+        request.services = Services()
         return self.get_response(request)
 ```
+
+The `connections` leaf shows where configuration enters: `inits` reads
+`settings` and hands the value to the leaf that needs it, so the link takes a
+key rather than fetching one. Reading `django.conf.settings` imports the
+framework, not `edges` — see
+[configuration](../layers/inits.md#configuration-enters-here).
+
+`DjangoTransaction` sits in `inits` here because it is binding glue over the
+framework's ambient transaction machinery, with no store behind it — the
+`@staticmethod` shape is the tell, and it is a Django luxury: the ORM's
+connection handling is global. An implementation that holds a connection
+(sqlite, SQLAlchemy) is an adapter like any other and belongs in `links`, with
+instance methods; the protocol in `pacts` declares plain methods either way.
+Neither placement is worth moving working code over.
+
+Its `savepoint()` is also where ORM exceptions are translated into `pacts`
+errors, so `IntegrityError` never reaches a mill.
 
 Register the middleware in `edges/settings/base.py`:
 
 ```python
 MIDDLEWARE = [
-    ...
-    "inits.middleware.DIMiddleware",
+    ...,
+    "myproject.inits.ServicesMiddleware",
 ]
 ```
 
-## RootRequestProtocol
+## RootRequest — typing the request
 
-Define the protocol in `pacts` so that `gates` and `mills` can reference the DI container without importing from `inits`:
+The typed request is a **typing-only subclass** of `HttpRequest`, defined in
+the web gate — never instantiated. The middleware mutates the real request;
+the subclass gives annotations something true-shaped to say.
 
 ```python
-# pacts/core.py
+# gates/web/django/request.py
+from django.http import HttpRequest
+
+from myproject.pacts.services import ServicesProtocol
+
+
+class RootRequest(HttpRequest):
+    services: ServicesProtocol
+```
+
+`ServicesProtocol` lives in `pacts/services.py`, mirroring `inits/services.py`
+— it types the namespace through *service protocols*, because `pacts` cannot
+import `inits`:
+
+```python
+# pacts/services.py  (or flat pacts.py while the project is young)
 from typing import Protocol
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from inits.container import UnitOfWork
 
 
-class DIProtocol(Protocol):
-    uow: "UnitOfWork"
+class ProposalServiceProtocol(Protocol):
+    def get(self, pk: int) -> ProposalDTO: ...
 
 
-class RootRequestProtocol(Protocol):
-    di: DIProtocol
-    user: ...
-    method: str
-    POST: ...
-    GET: ...
+class ServicesProtocol(Protocol):
+    proposals: ProposalServiceProtocol
 ```
 
-## Multi-repo writes
+The service protocols live in this module too, beside the namespace that names
+them: each describes a leaf of `inits/services.py`, not the noun its methods
+mention.
 
-Wrap writes that span multiple repositories in `uow.atomic()`:
+This split — contract in `pacts`, framework-typed carrier in the gate — keeps
+`pacts` framework-free and is what every service exposed on the request pays
+for its protocol (see
+[pacts](../layers/pacts.md#protocols-exist-where-a-boundary-needs-them)).
 
-```python
-# mills/proposals.py
-class ProposalService:
-    def __init__(self, uow: UnitOfWorkProtocol) -> None:
-        self._uow = uow
+## Framework-owned surfaces
 
-    def publish(self, proposal_id: int) -> None:
-        with self._uow.atomic():
-            proposal = self._uow.proposals.get(proposal_id)
-            event = DomainEvent(type="proposal.published", entity_id=proposal_id)
-            self._uow.proposals.mark_published(proposal_id)
-            self._uow.events.record(event)
-```
+GLIMPSE governs the code you write; it does not ask you to gut Django. Some
+surfaces are model-coupled by framework design — use them natively, and name
+the exemption instead of hiding it:
+
+- **`request.user`** is an ORM instance injected into every request. A gate
+  may touch it — auth checks, `user.pk` — but what crosses into a mill is an
+  id or a DTO, never the model.
+- **`django_login()`** demands a `User` model instance, so a login gate ends
+  up with a direct model query
+  (`django_login(request, get_user_model().objects.get(slug=...))`). Contained
+  and unavoidable.
+- **The admin** imports models by design. Write `admin.py` as plain Django and
+  put it at `links/db/django/admin.py`, next to the models it is coupled to —
+  the imports stay inside the adapter and every import contract stays green.
+- **`ModelForm`** is avoidable — avoid it (see forms above).
+
+Permissions follow the [threshold
+rule](../layers/gates.md#permissions-gates-while-trivial-mills-when-they-mean-something):
+trivial checks (`is_authenticated`, a role flag) live in gates; a permission
+system that encodes business rules belongs in mills.
 
 ## Import linter
 
-See the [Import Linter guide](import-linter.md) for the `pyproject.toml` configuration that enforces GLIMPSE layer boundaries.
+See the [Import Linter guide](import-linter.md) for the `pyproject.toml`
+configuration that enforces GLIMPSE layer boundaries.

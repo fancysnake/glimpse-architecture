@@ -1,90 +1,168 @@
 # File Layout
 
-Every GLIMPSE layer is a **package** (a directory containing an `__init__.py`), never a single `.py` file.
+`pacts`, `specs`, `mills`, and `inits` start as single modules and grow into
+packages. `links` and `gates` are packages from the first commit, because their
+first axis — the port — is known before any code exists.
 
 ## Path patterns per layer
 
-```
-pacts/{subdomain}.py
-pacts/{subdomain}/{bounded_context}.py
+```text
+pacts.py                                 # start here
+pacts/{noun}.py
+pacts/{noun}/{verb}.py
+pacts/{port}.py                          # port machinery, e.g. pacts/db.py
+pacts/services.py                        # ServicesProtocol + service protocols
 
-specs/{subdomain}.py
+specs.py
+specs/{noun}.py
 
-mills/{subdomain}.py
-mills/{subdomain}/{bounded_context}.py
+mills.py
+mills/{noun}.py
+mills/{noun}/{verb}.py
 
-inits/{subdomain}.py
+inits.py
+inits/repositories.py                    # inits stays thin — split it as convenient
+inits/services.py
 
-links/{port}/{adapter}/{entity}.py       # e.g. links/db/django/proposal.py
-links/{port}/{adapter}.py                # e.g. links/payment_api/stripe.py
+links/{port}/{adapter}.py                # e.g. links/db/sqlite.py
+links/{port}/{adapter}/{kind}.py         # e.g. links/db/postgres/repositories.py
+links/{port}/{adapter}/{kind}/{module}.py
+links/{port}/{adapter}/__init__.py       # facade — the public surface
 
-gates/{port}/{adapter}/{subdomain}.py    # e.g. gates/web/django/proposals.py
-gates/{port}/{adapter}/{subdomain}/{bounded_context}.py
+gates/{port}/{adapter}.py                # e.g. gates/cli/argparse.py
+gates/{port}/{adapter}/{page}.py
+gates/{port}/{adapter}/{page_group}/{page}.py   # whichever grouping the
+gates/{port}/{adapter}/{page}/{subpage}.py      # interface already has
 ```
 
 ## Splitting rules
 
-Split a file when it reaches ~1000 lines, or earlier when two unrelated concerns cause merge friction. Never create a nested directory before files exist to fill it.
+Split a file when it reaches ~1000 lines, or earlier when two unrelated concerns
+cause merge friction. Never create a nested directory before files exist to fill
+it — a folder needs at least two leaves to justify existing.
 
-Correct progression for a growing `billing` subdomain:
+See [Growing rules](growing.md) for the full set of thresholds.
 
-```
-# Start flat
-pacts/billing.py
-mills/billing.py
+Correct progression for a growing `invoices` noun:
 
-# Split only when the file grows large or concerns diverge
-pacts/billing/
+```text
+# Start flat — one module per layer
+pacts.py
+mills.py
+
+# Promote when a second noun appears, or the module grows large
+pacts/
 ├── __init__.py
-├── invoicing.py
-└── subscriptions.py
+├── invoices.py
+└── users.py
 
-mills/billing/
+mills/
 ├── __init__.py
-├── invoicing.py
-└── subscriptions.py
+├── invoices.py
+└── users.py
+
+# Cut by verb when the noun's activities diverge
+pacts/invoices/
+├── __init__.py
+├── issue.py
+└── refund.py
+
+mills/invoices/
+├── __init__.py
+├── issue.py
+└── refund.py
 ```
 
-When `pacts/billing.py` splits into a package, `mills/billing.py` must split at the same time to maintain symmetry.
+`pacts` and `mills` use the same axis, so their trees tend to look alike — but
+each promotes when its own size or friction says so, not in lockstep.
 
 ## Naming conventions
 
 | Axis | Naming style | Examples |
-|------|-------------|---------|
-| Subdomain | lowercase, no separators | `auth`, `billing`, `content` |
-| Bounded context | lowercase, no separators | `invoicing`, `subscriptions` |
-| Port | lowercase, snake_case | `web`, `cli`, `db`, `payment_api` |
-| Adapter | lowercase | `django`, `stripe`, `sendgrid` |
-| Entity | lowercase, singular | `user`, `proposal`, `invoice` |
+| --- | --- | --- |
+| Noun | lowercase, no separators | `invoices`, `users`, `events`, `panel` |
+| Verb | lowercase, no separators | `issue`, `refund`, `enroll` |
+| Page | lowercase, follows the interface | `dashboard`, `checkout`, `export` |
+| Port | lowercase, snake_case | `cli`, `web`, `db`, `payment_api` |
+| Adapter | lowercase | `argparse`, `postgres`, `stripe` |
+| Kind | lowercase, plural | `models`, `repositories` |
+
+Nouns are not forced to a single plurality — `events` are many, a `panel` is
+one. Name each after the thing it is.
 
 ## Project root layout
 
+A small project:
+
+```text
+myproject/
+├── pacts.py
+├── specs.py
+├── mills.py
+├── inits.py
+├── links/
+│   └── db/
+│       └── sqlite.py
+├── gates/
+│   └── cli/
+│       └── argparse.py
+└── edges/
+    └── __init__.py
 ```
+
+All seven layers exist from the first commit, `edges/` empty because a CLI has
+nothing to put in it — `pyproject.toml` names the `inits` entry point by dotted
+string. The empty package is what lets the `edges` [import
+contract](../guides/import-linter.md) run from day one. It fills when a
+framework does: settings, `wsgi.py`, `manage.py`.
+
+The same project grown:
+
+```text
 myproject/
 ├── pacts/
 ├── specs/
 ├── mills/
 ├── links/
 │   ├── db/
-│   │   └── django/
+│   │   └── postgres/
+│   │       ├── __init__.py       # facade
+│   │       ├── models.py
+│   │       └── repositories.py
 │   └── payment_api/
 │       └── stripe.py
 ├── gates/
 │   ├── web/
-│   │   └── django/
+│   │   └── flask/
 │   └── cli/
-│       └── django/
+│       └── argparse/
 ├── inits/
+│   ├── repositories.py
+│   └── services.py
 └── edges/
     ├── settings/
-    ├── wsgi.py
-    └── asgi.py
+    └── wsgi.py
 ```
+
+What lands in `edges/` is whatever the framework owns: settings plus a WSGI
+entry point here, and a `manage.py` too on Django. See [edges](../layers/edges.md).
+
+## `__init__.py` policy
+
+Keep `__init__.py` empty by default, and import each symbol from the module that
+defines it:
+
+```python
+from myproject.pacts.invoices import InvoiceDTO   # correct
+from myproject.pacts import InvoiceDTO            # avoid
+```
+
+The sanctioned exceptions — the [`links` adapter
+facade](../layers/links.md#the-facade) among them — are listed in the [layers
+overview](../layers/index.md#keep-__init__py-empty).
 
 ## What to avoid
 
-- A single `pacts.py`, `mills.py`, etc. at the project root — each layer must be a package
-- `links/db/django/billing.py` — links files are per-entity, not per-subdomain
-- `pacts/dtos.py` or `pacts/protocols.py` — split by subdomain, not by technical kind
-- A `common/` or `shared/` directory inside any layer
-- Creating `pacts/billing/invoicing.py` before `mills/billing/invoicing.py` (or vice versa) — maintain symmetry
+Every layout mistake is catalogued in [Drift red
+flags](../patterns/index.md#drift-red-flags) — start with [layout and
+slicing](../patterns/index.md#layout-and-slicing).

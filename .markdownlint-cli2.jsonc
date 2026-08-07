@@ -1,0 +1,14 @@
+{
+  "config": {
+    "MD013": {
+      "line_length": 80,
+      "code_blocks": false,
+      "tables": false
+    },
+    "MD024": {
+      "siblings_only": true
+    }
+  },
+  "globs": ["docs/**/*.md", "*.md"],
+  "ignores": ["site/**", "SKILL.src.md"]
+}
