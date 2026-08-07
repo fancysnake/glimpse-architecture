@@ -14,6 +14,10 @@ description: >-
 
 # GLIMPSE Architecture Reference
 
+This file is the compressed form of the full reference at
+<https://glimpse.fancysnake.dev/>, which is authoritative where the two
+disagree and carries the worked examples and the reasoning behind each rule.
+
 ## Layers
 
 ```text
