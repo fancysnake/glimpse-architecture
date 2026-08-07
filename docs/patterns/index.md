@@ -125,7 +125,9 @@ concrete class.
 
 ### 9. DTOs must be constructible from a store row
 
-Every DTO in `pacts` must be buildable from what `links` loaded. With Pydantic
+Every DTO in `pacts` must be buildable from what `links` loaded. Pydantic is
+not required — a dataclass, a `NamedTuple`, or an attrs class is a DTO too, and
+construction is then a plain call (`ProposalDTO(**dict(row))`). With Pydantic
 the spelling follows the store: attribute rows (an ORM instance) need
 `model_config = ConfigDict(from_attributes=True)`, so the repository can do
 `ProposalDTO.model_validate(row)`; mapping rows (`sqlite3.Row`, a dict cursor)

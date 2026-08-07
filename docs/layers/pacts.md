@@ -16,7 +16,7 @@ from nothing. All cross-layer communication happens through types defined here.
 
 - **Repository protocols** — structural interfaces that `links` repositories
   implement and `mills` services depend on
-- **DTOs** (Pydantic models) — read-side data shapes passed from `links` →
+- **DTOs** — read-side data shapes passed from `links` →
   `mills` → `gates`
 - **Write TypedDicts** — write-side input shapes passed from `gates` → `mills`
   and from `mills` → `links` (a `CreateXDict` has no `id` — the store assigns
@@ -115,8 +115,18 @@ pacts/core.py          # wrong — a common/ bucket wearing a nicer name
 ## DTO requirements
 
 Every DTO must be constructible from what the adapter loaded, so that `links`
-can turn a store row into a contract. With Pydantic the spelling follows the
-store:
+can turn a store row into a contract.
+
+**Pydantic is not required.** A DTO is a typed data shape with no behaviour, so
+a dataclass, a `NamedTuple`, or an attrs class serves as well — and since write
+shapes are already `TypedDict`, a project can define its whole `pacts` layer
+out of the standard library. Pick one and use it throughout; the layer rules do
+not change either way. What Pydantic buys is validation at the boundary, which
+matters most where data enters from outside — and on the read side the data
+came from your own store.
+
+The spelling of "constructible from a row" follows the choice. With Pydantic it
+follows the store:
 
 ```python
 # attribute rows — an ORM instance
@@ -126,6 +136,11 @@ InvoiceDTO.model_validate(row)
 # mapping rows — sqlite3.Row, a dict cursor: no config needed
 InvoiceDTO.model_validate(dict(row))
 ```
+
+Without it, construction is a plain call — `InvoiceDTO(**dict(row))` for a
+dataclass or an attrs class, `InvoiceDTO._make(row)` for a `NamedTuple` reading
+a row in column order. An ORM instance has no generic spelling; map the fields
+in the repository.
 
 When the row does not match the DTO — renamed columns, a join, an aggregate —
 the mapping is a private helper on the repository, in `links`. It belongs to

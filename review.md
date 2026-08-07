@@ -44,11 +44,20 @@ project hits them, not by effort.
     repository, in `links`, never by a method on the DTO: the mapping is the
     adapter's, and a second adapter returning the same DTO maps differently.
 
-- [ ] **A3. Is Pydantic mandatory?** The pitch is framework-agnostic; DTOs are
+- [x] **A3. Is Pydantic mandatory?** The pitch is framework-agnostic; DTOs are
   specified as Pydantic models and the red flag is phrased in Pydantic config.
   State the position: Pydantic assumed, or alternatives allowed with the
   equivalent of `from_attributes` named for each. Affects: `index.md`,
   `layers/pacts.md`.
+
+    **Done.** Not required. A DTO is a typed data shape with no behaviour, so a
+    dataclass, a `NamedTuple`, or an attrs class serves as well — and since
+    write shapes are already `TypedDict`, `pacts` can be pure standard library.
+    Pick one and use it throughout. What Pydantic buys is boundary validation,
+    which matters least on the read side, where the data came from your own
+    store. Construction without it is a plain call (`InvoiceDTO(**dict(row))`,
+    `InvoiceDTO._make(row)`); an ORM instance has no generic spelling, so map
+    the fields in the repository.
 
 - [ ] **A4. A contract shared by two nouns has no home.** `common`, `core`,
   `shared`, `utils` are all banned, and every contract is said to have a

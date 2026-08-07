@@ -305,12 +305,14 @@ hatches, not invitations.
    re-raising as a pacts error with the outer transaction usable. The
    implementation is inits binding glue, not a links adapter.
 8. New repo methods need matching Protocol in pacts.
-9. **DTOs must be constructible from what the adapter loaded** — with Pydantic,
-   attribute rows (an ORM instance) need
+9. **DTOs must be constructible from what the adapter loaded.** Pydantic is not
+   required — a dataclass, `NamedTuple`, or attrs class is a DTO too (write
+   shapes are already `TypedDict`, so `pacts` can be pure stdlib); pick one and
+   use it throughout. With Pydantic, attribute rows (an ORM instance) need
    `model_config = ConfigDict(from_attributes=True)`; mapping rows
-   (`sqlite3.Row`, a dict cursor) validate from `dict(row)` with no config. A
-   row that does not match the DTO is mapped in the repository, not by a
-   method on the DTO.
+   (`sqlite3.Row`, a dict cursor) validate from `dict(row)` with no config;
+   without it, construction is a plain call. A row that does not match the DTO
+   is mapped in the repository, not by a method on the DTO.
 10. New repositories exposed as `@cached_property` on `inits/repositories.py`
     (flat). New services exposed as `@cached_property` on `inits/services.py`
     (flat, zero-arg `Services()` builds its own dependencies — no DI inside

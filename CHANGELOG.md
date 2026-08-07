@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning].
   migrations placement, `ROOT_URLCONF`, `admin.py` next to models,
   framework-owned surfaces (`request.user`, `django_login`), no `ModelForm`
 - Importlinter contracts for both directions of `edges` isolation
+- Pydantic named as optional: a DTO is a typed data shape with no behaviour, so
+  a dataclass, `NamedTuple`, or attrs class serves as well — and with write
+  shapes already `TypedDict`, `pacts` can be pure standard library
 - The DTO construction rule spelled for non-ORM stores: attribute rows need
   `from_attributes=True`, mapping rows (`sqlite3.Row`, a dict cursor) validate
   from `dict(row)` with no config. A row that does not match the DTO is mapped
