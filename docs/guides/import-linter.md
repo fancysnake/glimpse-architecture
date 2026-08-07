@@ -128,6 +128,12 @@ in GLIMPSE letter order. A layer's allowed dependencies are what its contract
 does *not* mention: `gates` may import only `pacts`, `mills` only `pacts` and
 `specs`, and `inits` — the composition root — everything but `specs`.
 
+**Take the whole set on the first commit**, including contracts for layers the
+project does not have yet — which means creating those packages empty. It is
+boilerplate, and it is the price of the guardrails: a project started on a
+minimal subset drifts before the missing contracts get added, and by then the
+drift is the thing you would have to undo first.
+
 The `specs` line is the one people forget. `specs` holds business invariants,
 and business rules are enforced in `mills` alone, so `links`, `gates`, and
 `inits` must not import it. Without it, `specs` slowly turns into a

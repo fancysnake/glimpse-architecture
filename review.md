@@ -218,14 +218,17 @@ does not get rediscovered and rewritten in six months.
     answers a question with a whitelist. The IO rule already governs it, and
     that a data-class package is fine goes without saying.
 
-- [ ] **B5.** `guides/import-linter.md` — the config is a day-one copy-paste
+- [x] **B5.** `guides/import-linter.md` — the config is a day-one copy-paste
   trap. It declares contracts for all seven layers; a fresh project has no
-  `edges/` and may have no `specs.py`, and import-linter errors on modules it
-  cannot find. Ship a starter subset, or a note on adding contracts as layers
-  appear. (Verify the import-linter behaviour before writing the fix.)
-  Evidence: tingle, a CLI with no settings whatsoever, carries an
-  `edges/__init__.py` holding nothing but a docstring — the published contract
-  set forces an empty package into existence.
+  `edges/` and may have no `specs.py`. Ship a starter subset, or a note on
+  adding contracts as layers appear.
+
+    **Ruled: not solvable, and the boilerplate is the point.** A starter subset
+    is the wrong fix — tingle began on one and drifted before the missing
+    contracts arrived. Take the whole set on the first commit and create the
+    empty packages it implies; that is the price of the guardrails, and it is
+    cheaper than undoing the drift later. Said in four lines in the guide,
+    where a reader meets the config.
 
 - [ ] **B6. `DjangoTransaction` is in `links` in Ludamus.**
   `guides/django.md` states it "lives in `inits`, not `links`: it is binding
