@@ -2,8 +2,9 @@
 
 **Purpose:** Boundary contracts — the shared language of the entire system.
 
-`pacts` is the foundation layer. Everything else imports from it; it imports
-from nothing. All cross-layer communication happens through types defined here.
+`pacts` is the foundation layer. Everything else imports from it; it imports no
+project module. All cross-layer communication happens through types defined
+here.
 
 ## Depends on / depended on by
 

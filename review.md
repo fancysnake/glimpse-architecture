@@ -209,8 +209,14 @@ does not get rediscovered and rewritten in six months.
     them whenever `inits` hands the gate the whole registry (as tingle does)
     rather than individual mills.
 
-- [ ] **B4.** `layers/pacts.md` — "depends on nothing" is stated absolutely and
+- [x] **B4.** `layers/pacts.md` — "depends on nothing" is stated absolutely and
   then followed by Pydantic models. Add the clause: no *project* modules.
+
+    **Done** in two words: "it imports from nothing" → "it imports no project
+    module". Nothing about which third-party imports are allowed — the first
+    attempt said "third-party types allowed", which invites "so, Django?" and
+    answers a question with a whitelist. The IO rule already governs it, and
+    that a data-class package is fine goes without saying.
 
 - [ ] **B5.** `guides/import-linter.md` — the config is a day-one copy-paste
   trap. It declares contracts for all seven layers; a fresh project has no
