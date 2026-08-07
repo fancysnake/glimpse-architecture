@@ -74,11 +74,20 @@ project hits them, not by effort.
     pressure is what tells you when to split, so the growing rules govern this
     like every other module.
 
-- [ ] **A5. A constant needed by three layers has no home.** `MAX_TITLE_LENGTH`
+- [x] **A5. A constant needed by three layers has no home.** `MAX_TITLE_LENGTH`
   is wanted by the model (`links`), the form (`gates`) and the rule (`mills`).
   `specs` is mills-only, `edges` is unimportable, and `pacts` is documented as
   protocols/DTOs/errors/enums/TypedDicts — constants are not on the list.
   Affects: `layers/specs.md`, `layers/pacts.md`.
+
+    **Done.** `pacts`, which now lists shape constants among its contents. The
+    missing piece was the test telling the two layers apart — the docs
+    justified `specs` by who may import it, which is circular. New *specs or
+    pacts?* section: a constant more than one layer must **enforce** is a fact
+    about the shape of the data → `pacts`, beside the DTO it constrains; a
+    constant only the rule can **observe** is a business invariant → `specs`.
+    Tell: change a `specs` value and only `mills` changes; change a `pacts`
+    value and every enforcer changes together.
 
 - [ ] **A6. No runnable example.** "Reference, not a template" is fair, but
   pointing at a large production Django app is not a substitute for ~150 lines

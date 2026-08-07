@@ -41,6 +41,11 @@ and this project adheres to [Semantic Versioning].
   migrations placement, `ROOT_URLCONF`, `admin.py` next to models,
   framework-owned surfaces (`request.user`, `django_login`), no `ModelForm`
 - Importlinter contracts for both directions of `edges` isolation
+- A test telling `specs` and `pacts` apart, and shape constants listed among
+  `pacts` contents. A constant more than one layer must *enforce* is a fact
+  about the shape of the data and belongs beside the contract it constrains; a
+  constant only the rule can *observe* is a business invariant and stays in
+  `specs`. The previous justification — who may import the layer — was circular
 - Where a contract two nouns share lives: with the noun that needed it first,
   earning its own module named after the thing it is (`pacts/money.py`) once
   the sharing makes the case. The ban is on the name (`common.py`), not on the

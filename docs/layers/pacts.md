@@ -26,6 +26,10 @@ from nothing. All cross-layer communication happens through types defined here.
   (`ProposalNotFound`) — the gate catching it decides what it means for that
   screen
 - **Enums** — shared enumeration types
+- **Shape constants** — a maximum length, an allowed range, a decimal scale:
+  the facts more than one layer enforces about a contract. A threshold only
+  `mills` enforces is a business invariant and belongs in
+  [`specs`](specs.md#specs-or-pacts)
 - **`TransactionProtocol`** — the atomicity interface a service depends on
 - **Service protocols** — only where a boundary needs them (see below)
 

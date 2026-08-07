@@ -18,7 +18,7 @@ description: >-
 
 ```text
 pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
-specs   Business invariants (pure constants, no IO). Only for mills.
+specs   Business invariants (pure constants, no IO). Only for mills; see below.
 mills   Business logic, services. Depends on pacts + specs. No side-effect imports.
 links   Repositories, external clients. pacts + ORM / driver / SDK.
 gates   Entry points: request handlers, forms, routing, CLI commands. pacts only.
@@ -41,6 +41,15 @@ and is named by dotted string in `pyproject.toml`
 nothing first-party — it names project code only by dotted string
 (`DJANGO_SETTINGS_MODULE`, `MIDDLEWARE`, `ROOT_URLCONF`). The root middleware
 imports services, so it lives in `inits`, not `edges`.
+
+**specs or pacts — what it is, not where it is used.** A constant more than one
+layer must enforce is a fact about the shape of the data (a max length lives in
+the column, the form, and the rule) — that is a contract, so it goes to `pacts`
+beside the DTO it constrains. A constant only the rule can observe (seat limit,
+grace period) is a business invariant and goes to `specs`, which mills alone may
+import: a threshold reaching `links` ends up encoded in the schema. Tell: change
+a `specs` value and only `mills` changes; change a `pacts` value and every
+enforcer changes together.
 
 **Configuration enters at `inits`.** `inits` reads the environment and passes
 each value to the leaf that needs it; `mills` never reads settings at all. On a

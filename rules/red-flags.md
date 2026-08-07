@@ -69,7 +69,9 @@
 : `specs` are business invariants, and business rules are enforced in `mills`
   alone. A constant needed elsewhere is either a contract (`pacts`) or
   configuration — which enters at `inits`, or comes from the framework's
-  settings accessor where there is one.
+  settings accessor where there is one. A value more than one layer must
+  enforce (a max length, an allowed range) is a fact about the shape of the
+  data, so it belongs beside the contract it constrains, never here.
 
 **specs reading from `os.environ` or `settings`, or performing IO**
 : It is a constants layer. Environment-dependent values enter at `inits`.
