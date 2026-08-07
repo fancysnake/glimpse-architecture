@@ -133,7 +133,11 @@ inits/middleware.py         # ...plus one that binds it all together
 Each pacts module holds all boundary contracts for that noun or verb cut:
 DTOs, write TypedDicts, repository protocols, errors. Split by domain concern,
 not by technical kind — no `pacts/dtos.py`, `pacts/protocols.py`, or
-`pacts/repos/` directories, and never a `pacts/core.py` or `common` bucket.
+`pacts/repos/` directories, and never a `pacts/core.py` or `common` bucket. A
+contract two nouns share gets no bucket either: it stays in the noun that
+needed it first, and earns its own module named after the thing it is
+(`pacts/money.py`) once the sharing makes the case. The ban is on the name, not
+on the extraction.
 
 **pacts placement algorithm** — pacts mirrors the whole system; place each
 contract by three questions, in order: (1) tied to a noun? →

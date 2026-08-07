@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning].
   migrations placement, `ROOT_URLCONF`, `admin.py` next to models,
   framework-owned surfaces (`request.user`, `django_login`), no `ModelForm`
 - Importlinter contracts for both directions of `edges` isolation
+- Where a contract two nouns share lives: with the noun that needed it first,
+  earning its own module named after the thing it is (`pacts/money.py`) once
+  the sharing makes the case. The ban is on the name (`common.py`), not on the
+  extraction
 - Pydantic named as optional: a DTO is a typed data shape with no behaviour, so
   a dataclass, `NamedTuple`, or attrs class serves as well — and with write
   shapes already `TypedDict`, `pacts` can be pure standard library

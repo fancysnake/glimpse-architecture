@@ -32,7 +32,10 @@
 **`common`, `shared`, `utils`, or `entities` as a module or folder name**
 : Magnets for unrelated code. Each says where a file sits, not what it holds,
   so anything can be filed there and nothing can ever be found. Shared types go
-  to `pacts`; everything else takes a name from the axis it belongs to. The
+  to `pacts` — a contract two nouns share stays with the noun that needed it
+  first, and earns its own module named after the thing it is (`pacts/money.py`)
+  once the sharing makes the case. Everything else takes a name from the axis it
+  belongs to. The
   exception is a real concept that happens to carry the word — a `DOMEntity` in
   a browser-port adapter earns `entities.py`; a bag of dataclasses does not.
 

@@ -59,12 +59,20 @@ project hits them, not by effort.
     `InvoiceDTO._make(row)`); an ORM instance has no generic spelling, so map
     the fields in the repository.
 
-- [ ] **A4. A contract shared by two nouns has no home.** `common`, `core`,
+- [x] **A4. A contract shared by two nouns has no home.** `common`, `core`,
   `shared`, `utils` are all banned, and every contract is said to have a
   principled home under noun / port / wiring. Where do `Money`, `Address`,
   `PageDTO`, `DateRangeDTO` go? Where does a cross-noun reporting DTO
   (`InvoiceWithCustomerDTO`) go? Affects: `layers/pacts.md#slicing-axis`,
   `rules/red-flags.md`.
+
+    **Done.** No special rule and no bucket: it stays with the noun that needed
+    it first, and earns its own module named after the thing it is
+    (`pacts/money.py`) once the sharing makes the case — a noun like any other,
+    so the axis does not change. The ban is on the *name*, not the extraction:
+    `common.py` says where a file sits, `money.py` says what it holds. Import
+    pressure is what tells you when to split, so the growing rules govern this
+    like every other module.
 
 - [ ] **A5. A constant needed by three layers has no home.** `MAX_TITLE_LENGTH`
   is wanted by the model (`links`), the form (`gates`) and the rule (`mills`).

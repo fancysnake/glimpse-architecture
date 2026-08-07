@@ -112,6 +112,20 @@ pacts/repos/           # wrong — technical grouping
 pacts/core.py          # wrong — a common/ bucket wearing a nicer name
 ```
 
+### A contract two nouns share
+
+No special rule, and no bucket for it. A shared contract starts where it came
+from — `Money` lives in `pacts/invoices.py` if that is the noun that needed it
+first, and the other module imports it. If the sharing keeps growing, the
+import pressure says so, and the contract earns a module of its own named
+after the thing it is: `pacts/money.py`. That is a noun like any other, so
+nothing about the axis changes.
+
+The ban is on the *name*, not on the extraction. `pacts/common.py` says where a
+file sits; `pacts/money.py` says what it holds. Wait for the second consumer
+before splitting — the same [growing rules](../slicing/growing.md) that govern
+every other module, applied to a contract nobody has claimed yet.
+
 ## DTO requirements
 
 Every DTO must be constructible from what the adapter loaded, so that `links`
