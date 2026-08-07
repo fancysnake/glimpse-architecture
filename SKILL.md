@@ -21,8 +21,8 @@ pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
 specs   Business invariants (pure constants, no IO). Only for mills.
 mills   Business logic, services. Depends on pacts + specs. No side-effect imports.
 links   Repositories, external clients. pacts + ORM / driver / SDK.
-gates   Entry points: request handlers, forms, routing, CLI commands. pacts + mills.
-inits   DI container, middleware. Wires links into gates. Only layer that may import gates.
+gates   Entry points: request handlers, forms, routing, CLI commands. pacts only.
+inits   DI container, middleware. The only layer where gates, mills, links meet.
 edges   Settings, wsgi, manage.py. Outside GLIMPSE; optional (CLI projects skip it).
 ```
 
@@ -321,8 +321,9 @@ hatches, not invitations.
 1. **Entry points return DTOs, never models.** Templates, serializers, and CLI
    output receive DTOs from pacts. ORM instances never leave `links`.
 2. **Entry points call services, not repos.** `request.services.<name>.method(...)`
-   is the data path out of a view — never import a repo or model in `gates`,
-   never reach a repository directly. Services are exposed as a flat namespace
+   is the data path out of a view — `pacts` is the only project import a gate
+   has, so never a repo, a model, or a service class, and never a repository
+   reached directly. Services are exposed as a flat namespace
    wired in `inits/services.py`; CLI gates receive theirs at construction.
 3. **Services take specific repo protocols + a `TransactionProtocol` via
    constructor** — not imports of concrete repos, not dependencies passed as
@@ -527,9 +528,11 @@ unit-tested wherever it lives.
 
 ### gates
 
-**A gate importing ORM models or repository classes**
-: Call a service. If none exists, create one — a mill in `mills`, a protocol in
-  `pacts`, a leaf in `inits/services.py` — before writing the gate.
+**A gate importing project code other than `pacts`**
+: An ORM model, a repository class, a service class from `mills` — all the same
+  violation. A gate calls services through their protocols. If none exists,
+  create one — a mill in `mills`, a protocol in `pacts`, a leaf in
+  `inits/services.py` — before writing the gate.
 
 **A gate returning ORM instances to templates or serializers**
 : Return DTOs from `pacts`. ORM instances never leave `links`.

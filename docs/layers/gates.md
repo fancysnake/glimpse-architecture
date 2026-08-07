@@ -10,11 +10,14 @@ mechanism (HTTP, CLI) but delegates all domain logic to `mills`.
 
 | | |
 | --- | --- |
-| **Depends on** | pacts, mills |
+| **Depends on** | pacts |
 | **Depended on by** | nothing (entry point) |
 
-`gates` never imports from `links` directly. Data access happens through
-services injected by `inits`.
+`pacts` is the only project code a gate imports — not `links`, and not `mills`
+either. A gate calls services through the protocols `pacts` declares, and
+`inits` supplies the implementations: attached to the request on the web,
+injected into the constructor on a CLI. The gate never names the class it is
+calling.
 
 ## What it contains
 
@@ -27,9 +30,9 @@ services injected by `inits`.
 
 ## Entry points call services, not repositories
 
-The data path out of a gate is a service call. A gate never imports a repository
-or a model, and never reaches a repository directly — not even for a single
-trivial read.
+The data path out of a gate is a service call. A gate never imports a
+repository, a model, or the service class itself, and never reaches a
+repository directly — not even for a single trivial read.
 
 ```python
 # gates/web/django/proposals.py

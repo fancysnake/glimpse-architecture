@@ -2,11 +2,12 @@
 
 **Purpose:** Dependency injection container and middleware — the wiring layer.
 
-`inits` is the only layer that knows about both `links` (infrastructure
-implementations) and `gates` (entry points). It is not one wall of the hexagon —
-it is the keeper of the whole contract: it builds the repository registry,
-passes it to the services registry, and attaches the services to the entry-point
-context. Everything meets in `inits`, and nothing else meets anywhere.
+`inits` is the only layer that knows the concrete classes in `mills` (services),
+`links` (infrastructure implementations), and `gates` (entry points) at once.
+It is not one wall of the hexagon — it is the keeper of the whole contract: it
+builds the repository registry, passes it to the services registry, and
+attaches the services to the entry-point context. Everything meets in `inits`,
+and nothing else meets anywhere.
 
 ## Depends on / depended on by
 

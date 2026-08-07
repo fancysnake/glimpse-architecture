@@ -11,7 +11,7 @@ and reaches data through the repository protocols defined there.
 | | |
 | --- | --- |
 | **Depends on** | pacts, specs |
-| **Depended on by** | gates, inits |
+| **Depended on by** | inits — gates reach services through `pacts` protocols |
 
 "Framework-free" is about **side effects**, not package names. An import is
 forbidden in `mills` if it does IO, touches global state, or owns control flow

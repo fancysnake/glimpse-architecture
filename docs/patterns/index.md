@@ -21,9 +21,9 @@ def detail(request: RootRequest, pk: int) -> HttpResponse:
 
 ### 2. Entry points call services, not repositories
 
-Gates never import repositories or persistence models. The data path out of a
-gate is a service call, and services are exposed as a flat namespace wired in
-`inits/services.py`.
+Gates never import repositories, persistence models, or the service classes
+themselves. The data path out of a gate is a service call, and services are
+exposed as a flat namespace wired in `inits/services.py`.
 
 ```python
 # correct
@@ -31,6 +31,9 @@ proposals = request.services.proposals.list_active()
 
 # wrong — imports a concrete class from links
 from myproject.links.db.postgres import ProposalRepository
+
+# wrong — imports a concrete class from mills; the protocol is in pacts
+from myproject.mills.proposals import ProposalService
 ```
 
 If no service exists for what you need, create one — a mill in `mills`, a

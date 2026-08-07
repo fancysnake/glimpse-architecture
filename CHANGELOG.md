@@ -44,6 +44,17 @@ and this project adheres to [Semantic Versioning].
 
 ### Changed
 
+- **`gates` no longer imports `mills`.** A gate's only project import is
+  `pacts`: it calls services through their protocols, and `inits` supplies the
+  implementations. `gates`, `mills`, and `links` are now three siblings that
+  never see each other, meeting only in `inits`
+- Importlinter example rewritten as one `forbidden` contract per layer, named
+  after the layer and listing every layer it may not reach, in GLIMPSE letter
+  order. `inits` carries `allow_indirect_imports` so its legal
+  `inits → mills → specs` chain does not trip the `specs` rule
+- `independence` contracts added for the axis below `gates`, `links`, and
+  `edges` — ports do not import each other, and each `edges` file is reached
+  by the runtime on its own (needs import-linter 2.0 for wildcards)
 - Slicing vocabulary replaced: **noun** and **verb** instead of subdomain and
   bounded context, and **page** as the `gates` axis. Nouns are named after the
   thing they are, with no prescribed plurality; a verb cut must name a real

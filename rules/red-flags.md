@@ -106,9 +106,11 @@
 
 ### gates
 
-**A gate importing ORM models or repository classes**
-: Call a service. If none exists, create one — a mill in `mills`, a protocol in
-  `pacts`, a leaf in `inits/services.py` — before writing the gate.
+**A gate importing project code other than `pacts`**
+: An ORM model, a repository class, a service class from `mills` — all the same
+  violation. A gate calls services through their protocols. If none exists,
+  create one — a mill in `mills`, a protocol in `pacts`, a leaf in
+  `inits/services.py` — before writing the gate.
 
 **A gate returning ORM instances to templates or serializers**
 : Return DTOs from `pacts`. ORM instances never leave `links`.

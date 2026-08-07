@@ -31,8 +31,8 @@ runtime (WSGI server)
    touches gets built.
 3. **A gate handles the request.** The handler types the request as
    `RootRequest` — the gate-local typing subclass — and calls
-   `request.services.proposals.get(pk)`. It imports nothing from `links` or
-   `inits`.
+   `request.services.proposals.get(pk)`. Its only project import is `pacts`:
+   nothing from `mills`, `links`, or `inits`.
 4. **A mill runs the business rule.** The service sees repository protocols from
    `pacts` and constants from `specs`. If it writes to more than one repository,
    it opens `transaction.atomic()` itself — the gate never does.

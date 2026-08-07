@@ -12,8 +12,8 @@ The name is the layers: **G**ates, **L**inks, **I**nits, **M**ills, **P**acts,
 **S**pecs, **E**dges. The words are deliberately non-standard — they collide
 with nothing, so `mills` in an import always means the layer, never a
 framework's `services` or somebody's `core`. The acronym is a mnemonic, not a
-dependency diagram — the stack reads pacts → specs → mills → links/gates →
-inits.
+dependency diagram — everything stands on pacts, specs sits under mills, and
+gates, mills, and links meet only in inits.
 
 This is a **reference**, not a template. GLIMPSE describes how to structure
 code; it does not generate it. For a real-world example, see
@@ -27,8 +27,8 @@ pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
 specs   Business invariants (pure constants, no IO). Only for mills.
 mills   Business logic, services. Depends on pacts + specs. No framework, no ORM.
 links   Repositories, external clients. Depends on pacts + ORM / driver / SDK.
-gates   Entry points: request handlers, forms, routing, CLI commands. Depends on pacts + mills.
-inits   DI container, middleware. Wires links into gates.
+gates   Entry points: request handlers, forms, routing, CLI commands. Depends on pacts.
+inits   DI container, middleware. The only layer where gates, mills, and links meet.
 edges   Settings, process entry points, management scripts. Outside GLIMPSE proper.
 ```
 
