@@ -1,7 +1,7 @@
 # Request Lifecycle
 
 One HTTP request, traced through every layer. A CLI command follows the same
-shape with a different opening: there is no `edges` and no middleware —
+shape with a different opening: nothing in `edges`, no middleware —
 `pyproject.toml` names `inits` by dotted string, and `inits` constructs the
 gate directly, injecting the mills into its constructor.
 

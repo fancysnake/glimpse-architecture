@@ -127,6 +127,13 @@ and this project adheres to [Semantic Versioning].
 - Class-based views are no longer presented as the recommended Django shape;
   that is a framework choice, not a GLIMPSE one
 
+- **`edges/` is empty on a CLI, not absent.** All seven layers exist from the
+  first commit. The contracts are taken as a set on day one and a contract can
+  only name a module that exists, so a project with nothing to put in `edges`
+  still creates the package — tingle's is one empty `__init__.py`, and it is
+  what lets the `edges` and `inside-edges` contracts run. Six pages said a CLI
+  needs no `edges/` at all
+
 ### Fixed
 
 - `specs` no longer sends a constant a second layer needs to `edges`. It is

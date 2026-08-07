@@ -10,7 +10,7 @@ GLIMPSE keeps the hexagonal ideas and adds the missing prescription.
 
 ## A concrete starting point
 
-Day one is four modules and two packages:
+Day one is four modules and three packages:
 
 ```text
 myproject/
@@ -19,12 +19,17 @@ myproject/
 ├── mills.py
 ├── inits.py
 ├── links/db/sqlite.py
-└── gates/cli/argparse.py
+├── gates/cli/argparse.py
+└── edges/__init__.py     # empty — nothing to put here yet
 ```
 
-No `edges/` — a CLI project doesn't need one. The entry point is a dotted
-string in `pyproject.toml` (`[project.scripts]` → `myproject.inits:run`), and
-`inits` composes the gates from there.
+A CLI has nothing for `edges` to hold: the entry point is a dotted string in
+`pyproject.toml` (`[project.scripts]` → `myproject.inits:run`), and `inits`
+composes the gates from there. The package exists anyway, because the
+[import contracts](guides/import-linter.md) are taken as a set on the first
+commit and a contract can only name a module that exists. One empty
+`__init__.py` buys the `edges` rule on day one; it fills when a framework
+brings settings with it.
 
 No empty scaffolding, no guessing at nouns you do not have yet. The [growing
 rules](slicing/growing.md) say exactly when a module becomes a package and when

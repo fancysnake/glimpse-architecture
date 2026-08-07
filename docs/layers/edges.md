@@ -18,10 +18,13 @@ configuration imports the framework, not the project's settings module. That
 indirection is what lets `edges` be isolated and still configure the
 application.
 
-`edges` is optional. A CLI project bootstrapped through `[project.scripts]`
-may have no `edges/` directory at all — the runtime reaches `inits` directly
-by dotted string in `pyproject.toml`. Without a framework there is no settings
-accessor either, and configuration enters at
+`edges` is often empty, and never absent. A CLI project bootstrapped through
+`[project.scripts]` has nothing to put in it — the runtime reaches `inits`
+directly by dotted string in `pyproject.toml`. The package exists all the
+same, holding one empty `__init__.py`, because the [import
+contracts](../guides/import-linter.md) are taken as a set on the first commit
+and a contract can only name a module that exists. Without a framework there
+is no settings accessor either, and configuration enters at
 [`inits`](inits.md#configuration-enters-here) instead.
 
 ## Position in the stack

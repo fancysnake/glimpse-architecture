@@ -180,8 +180,8 @@ Frameworks with a settings singleton are the exception, and the reason
 `django.conf.settings` directly: the framework loads `edges/settings.py` and
 re-exposes its values through its own accessor, so reading configuration is an
 import of the framework, never of `edges`, and the two-way isolation holds. A
-project without such a framework has no settings layer and usually no `edges/`
-directory — `inits` does the whole job.
+project without such a framework has no settings layer at all, and its
+`edges/` stays empty — `inits` does the whole job.
 
 Passing values down does not mean routing every one through `inits`. A leaf
 that owns a piece of the environment may read it where it lives, provided the

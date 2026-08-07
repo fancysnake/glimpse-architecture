@@ -27,8 +27,12 @@ mills   Business logic, services. Depends on pacts + specs. No side-effect impor
 links   Repositories, external clients. pacts + ORM / driver / SDK.
 gates   Entry points: request handlers, forms, routing, CLI commands. pacts only.
 inits   DI container, middleware. The only layer where gates, mills, links meet.
-edges   Settings, wsgi, manage.py. Outside GLIMPSE; optional (CLI projects skip it).
+edges   Settings, wsgi, manage.py. Outside GLIMPSE; empty on a CLI, never absent.
 ```
+
+All seven exist from the first commit — `edges/` as an empty package where the
+project has nothing for it. The import contracts are taken as a set on day one,
+and a contract can only name a module that exists.
 
 Import rules enforced by `importlinter` (`pyproject.toml` →
 `[tool.importlinter]`). No exceptions without explicit approval.
@@ -66,9 +70,10 @@ enforcer changes together.
 each value to the leaf that needs it; `mills` never reads settings at all. On a
 framework with a settings singleton, `links` and `gates` read it through the
 framework's accessor (`django.conf.settings`) — an import of the framework, not
-of `edges`. Without such a framework there is no settings layer and usually no
-`edges/`. A leaf may still probe its own environment when the probe is
-injectable for tests; what the environment *decides*, `inits` decides. User
+of `edges`. Without such a framework there is no settings layer at all, and
+`edges/` stays empty. A leaf may still probe its own environment when the
+probe is injectable for tests; what the environment *decides*, `inits`
+decides. User
 input read at runtime — a config file, a command flag — is not configuration:
 it comes in through a port, shaped in `pacts`, validated in a mill.
 
@@ -110,6 +115,7 @@ mills.py
 inits.py
 links/{port}/{adapter}.py                   # e.g. links/db/sqlite.py
 gates/{port}/{adapter}.py                   # e.g. gates/cli/argparse.py
+edges/__init__.py                           # empty until a framework fills it
 
 # Grown
 pacts/{noun}.py                             # or pacts/{noun}/{verb}.py

@@ -10,7 +10,7 @@ alike.
 
 | Project | Port | Stage |
 | --- | --- | --- |
-| [tingle](https://github.com/fancysnake/tingle) | CLI | layers promoted to packages, no `edges` |
+| [tingle](https://github.com/fancysnake/tingle) | CLI | layers promoted to packages, `edges` still empty |
 | [vekna](https://github.com/fancysnake/vekna) | CLI | layers repeated inside self-contained packages |
 | [Ludamus](https://github.com/zagrajmy/ludamus) | web | production Django |
 
@@ -18,9 +18,9 @@ alike.
 
 A CLI that measures a codebase against metrics you declare. It is the closest
 thing to the layout [Why GLIMPSE](why.md#a-concrete-starting-point) describes:
-no `edges` worth the name, `Services()` taking no arguments and building its
-own dependencies, `inits/cli.py` composing the gate and handing it to the
-runtime.
+an `edges/` holding nothing but its `__init__.py`, `Services()` taking no
+arguments and building its own dependencies, `inits/cli.py` composing the gate
+and handing it to the runtime.
 
 Worth opening for:
 

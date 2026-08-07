@@ -85,14 +85,17 @@ myproject/
 ├── links/
 │   └── db/
 │       └── sqlite.py
-└── gates/
-    └── cli/
-        └── argparse.py
+├── gates/
+│   └── cli/
+│       └── argparse.py
+└── edges/
+    └── __init__.py       # empty until a framework fills it
 ```
 
-No `edges/` here: this project is a CLI, so the runtime reaches `inits` by
-dotted string in `pyproject.toml`. `edges/` appears when a framework brings
-settings and a deployment entry point with it.
+`edges/` is there and empty. A CLI has nothing to put in it — the runtime
+reaches `inits` by dotted string in `pyproject.toml` — but the [import
+contracts](../guides/import-linter.md) are taken as a set on the first commit,
+and a contract can only name a module that exists.
 
 See [Growing rules](../slicing/growing.md) for what triggers the promotion.
 

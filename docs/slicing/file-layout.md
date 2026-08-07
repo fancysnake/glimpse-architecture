@@ -103,14 +103,18 @@ myproject/
 ├── links/
 │   └── db/
 │       └── sqlite.py
-└── gates/
-    └── cli/
-        └── argparse.py
+├── gates/
+│   └── cli/
+│       └── argparse.py
+└── edges/
+    └── __init__.py
 ```
 
-No `edges/` — a CLI project may not need one; `pyproject.toml` names the
-`inits` entry point by dotted string. `edges/` appears when a framework does:
-settings, `wsgi.py`, `manage.py`.
+All seven layers exist from the first commit, `edges/` empty because a CLI has
+nothing to put in it — `pyproject.toml` names the `inits` entry point by dotted
+string. The empty package is what lets the `edges` [import
+contract](../guides/import-linter.md) run from day one. It fills when a
+framework does: settings, `wsgi.py`, `manage.py`.
 
 The same project grown:
 
