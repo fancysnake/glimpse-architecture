@@ -41,6 +41,14 @@ and this project adheres to [Semantic Versioning].
   migrations placement, `ROOT_URLCONF`, `admin.py` next to models,
   framework-owned surfaces (`request.user`, `django_login`), no `ModelForm`
 - Importlinter contracts for both directions of `edges` isolation
+- Where configuration comes from: it enters at `inits`, which passes each
+  value to the leaf that needs it. A framework's settings singleton is the
+  exception and the reason `edges` exists — reading `django.conf.settings`
+  imports the framework, never `edges`. A leaf may probe its own environment
+  when the probe is injectable; what the environment *decides*, `inits`
+  decides. User input read at runtime — a config file, a command flag — is not
+  configuration: it arrives through a port, shaped in `pacts`, validated in a
+  mill
 
 ### Changed
 

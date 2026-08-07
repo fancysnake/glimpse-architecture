@@ -16,9 +16,18 @@ imports services, so it belongs in [`inits`](inits.md). Code that a settings
 string names but that touches no project module can sit in `edges`; anything
 that imports the project cannot.
 
+Nothing importing `edges` does not mean nothing *reads* the settings. The
+framework loads `edges/settings.py` itself and re-exposes the values through
+its own accessor — `django.conf.settings` — so a gate or a link reading
+configuration imports the framework, not the project's settings module. That
+indirection is what lets `edges` be isolated and still configure the
+application.
+
 `edges` is optional. A CLI project bootstrapped through `[project.scripts]`
 may have no `edges/` directory at all — the runtime reaches `inits` directly
-by dotted string in `pyproject.toml`.
+by dotted string in `pyproject.toml`. Without a framework there is no settings
+accessor either, and configuration enters at
+[`inits`](inits.md#configuration-enters-here) instead.
 
 ## Position in the stack
 

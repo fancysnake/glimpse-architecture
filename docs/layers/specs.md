@@ -22,9 +22,11 @@ as a default).
 
 The single-consumer rule is the point of the layer. A business invariant only
 ever matters where business rules are enforced, and that is `mills`. If `gates`
-needs a page size or `links` needs a timeout, that value is configuration and
-belongs in `edges`; if it is a shape or a name shared across layers, it belongs
-in `pacts`.
+needs a page size or `links` needs a timeout, that value is configuration: it
+enters at [`inits`](inits.md#configuration-enters-here) and is passed to
+whatever needs it — or comes from the framework's settings accessor, on a
+framework that has one. If it is a shape or a name shared across layers, it
+belongs in `pacts`.
 
 ## What it contains
 

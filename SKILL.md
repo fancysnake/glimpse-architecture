@@ -42,6 +42,16 @@ nothing first-party — it names project code only by dotted string
 (`DJANGO_SETTINGS_MODULE`, `MIDDLEWARE`, `ROOT_URLCONF`). The root middleware
 imports services, so it lives in `inits`, not `edges`.
 
+**Configuration enters at `inits`.** `inits` reads the environment and passes
+each value to the leaf that needs it; `mills` never reads settings at all. On a
+framework with a settings singleton, `links` and `gates` read it through the
+framework's accessor (`django.conf.settings`) — an import of the framework, not
+of `edges`. Without such a framework there is no settings layer and usually no
+`edges/`. A leaf may still probe its own environment when the probe is
+injectable for tests; what the environment *decides*, `inits` decides. User
+input read at runtime — a config file, a command flag — is not configuration:
+it comes in through a port, shaped in `pacts`, validated in a mill.
+
 **"Framework-free" means no side effects, not package names.** Forbidden in
 `mills`: imports that do IO, touch global state, or own control flow (ORM,
 HTTP machinery, settings access). Pure computation is fine wherever it comes
@@ -482,11 +492,12 @@ unit-tested wherever it lives.
 
 **specs imported from links, gates, or inits**
 : `specs` are business invariants, and business rules are enforced in `mills`
-  alone. A constant needed elsewhere is either configuration (`edges`) or a
-  contract (`pacts`).
+  alone. A constant needed elsewhere is either a contract (`pacts`) or
+  configuration — which enters at `inits`, or comes from the framework's
+  settings accessor where there is one.
 
 **specs reading from `os.environ` or `settings`, or performing IO**
-: It is a constants layer. Anything environment-dependent belongs in `edges`.
+: It is a constants layer. Environment-dependent values enter at `inits`.
 
 ### mills
 

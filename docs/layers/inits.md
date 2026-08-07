@@ -140,6 +140,49 @@ resource (a pooled HTTP session, an expensive client) calls the cached
 factory — `return StripeClient(_stripe_session())` — and the container shape
 never changes.
 
+## Configuration enters here
+
+Deployment values — a database path, an API key, a timeout — enter the object
+graph in `inits`. It reads them and passes each to the leaf that needs it as a
+constructor argument. No other layer goes looking: `mills` may not read
+settings at all (that is a side effect), and `links` and `gates` receive what
+they need rather than fetching it.
+
+```python
+class Repositories:
+    @cached_property
+    def connection(self) -> sqlite3.Connection:
+        return sqlite3.connect(os.environ.get("DB_PATH", "app.db"))
+```
+
+Frameworks with a settings singleton are the exception, and the reason
+[`edges`](edges.md) exists at all. A Django project's `links` and `gates` read
+`django.conf.settings` directly: the framework loads `edges/settings.py` and
+re-exposes its values through its own accessor, so reading configuration is an
+import of the framework, never of `edges`, and the two-way isolation holds. A
+project without such a framework has no settings layer and usually no `edges/`
+directory — `inits` does the whole job.
+
+Passing values down does not mean routing every one through `inits`. A leaf
+that owns a piece of the environment may read it where it lives, provided the
+probe is injectable so tests can replace it — an editor adapter checking
+`TERM_PROGRAM` and `PATH` is describing its own availability, not taking a
+deployment decision. The rule is about *decisions*: what the environment
+chooses, `inits` chooses.
+
+### Configuration is not user input
+
+A value the deployment sets is configuration. A value a *user* supplies at
+runtime — a config file in the working directory, a command flag — is input,
+and input arrives through a port like any other data: read by
+`links/config_file/{adapter}`, shaped by a contract in `pacts`, validated by a
+mill. Parsing it in `inits` would put user data handling in the wiring layer,
+and the file's schema would have no home.
+
+The tell is who can change the value and when. A deployment sets `DB_PATH`
+once, before the process starts; a user edits the config file between two runs
+and expects the next run to disagree with it out loud.
+
 ## Growing the registries
 
 Stay flat while a registry has ≤12 leaves. At 13 or more, introduce a sub-bucket

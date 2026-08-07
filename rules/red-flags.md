@@ -60,11 +60,12 @@
 
 **specs imported from links, gates, or inits**
 : `specs` are business invariants, and business rules are enforced in `mills`
-  alone. A constant needed elsewhere is either configuration (`edges`) or a
-  contract (`pacts`).
+  alone. A constant needed elsewhere is either a contract (`pacts`) or
+  configuration — which enters at `inits`, or comes from the framework's
+  settings accessor where there is one.
 
 **specs reading from `os.environ` or `settings`, or performing IO**
-: It is a constants layer. Anything environment-dependent belongs in `edges`.
+: It is a constants layer. Environment-dependent values enter at `inits`.
 
 ### mills
 
