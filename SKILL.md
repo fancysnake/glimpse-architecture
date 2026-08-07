@@ -382,7 +382,8 @@ hatches, not invitations.
    protocol: `atomic()` and `savepoint()`, both returning a context manager;
    `savepoint()` rolls back only its block on constraint violation,
    re-raising as a pacts error with the outer transaction usable. The
-   implementation is inits binding glue, not a links adapter.
+   implementation is inits binding glue when it wraps an ambient ORM with no
+   store behind it, and a links adapter when it holds a connection.
 8. New repo methods need matching Protocol in pacts.
 9. **DTOs must be constructible from what the adapter loaded.** Pydantic is not
    required — a dataclass, `NamedTuple`, or attrs class is a DTO too (write

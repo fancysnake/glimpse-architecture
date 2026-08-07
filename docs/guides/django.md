@@ -305,13 +305,16 @@ key rather than fetching one. Reading `django.conf.settings` imports the
 framework, not `edges` — see
 [configuration](../layers/inits.md#configuration-enters-here).
 
-`DjangoTransaction` lives in `inits`, not `links`: it is binding glue over the
-framework's ambient transaction machinery, not an adapter with a store behind
-it. Its `savepoint()` is also where ORM exceptions are translated into `pacts`
-errors, so `IntegrityError` never reaches a mill. The `@staticmethod` shape is
-a Django luxury — the ORM's connection handling is global. An implementation
-that holds a connection (sqlite, SQLAlchemy) uses instance methods; the
-protocol in `pacts` declares plain methods either way.
+`DjangoTransaction` sits in `inits` here because it is binding glue over the
+framework's ambient transaction machinery, with no store behind it — the
+`@staticmethod` shape is the tell, and it is a Django luxury: the ORM's
+connection handling is global. An implementation that holds a connection
+(sqlite, SQLAlchemy) is an adapter like any other and belongs in `links`, with
+instance methods; the protocol in `pacts` declares plain methods either way.
+Neither placement is worth moving working code over.
+
+Its `savepoint()` is also where ORM exceptions are translated into `pacts`
+errors, so `IntegrityError` never reaches a mill.
 
 Register the middleware in `edges/settings/base.py`:
 

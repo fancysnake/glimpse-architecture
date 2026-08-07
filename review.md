@@ -230,12 +230,20 @@ does not get rediscovered and rewritten in six months.
     cheaper than undoing the drift later. Said in four lines in the guide,
     where a reader meets the config.
 
-- [ ] **B6. `DjangoTransaction` is in `links` in Ludamus.**
+- [x] **B6. `DjangoTransaction` is in `links` in Ludamus.**
   `guides/django.md` states it "lives in `inits`, not `links`: it is binding
   glue over the framework's ambient transaction machinery, not an adapter with
   a store behind it" — a positive claim carrying a rationale. Ludamus puts it
   at `links/db/django/transaction.py`. Found while fixing B1: either one of the
   two moves, or the claim softens to a preference.
+
+    **Done — the claim softens.** It is drift, and harmless: nothing requires
+    `inits` at all costs. The docs now give the deciding factor instead of the
+    verdict — glue over an ambient ORM with no store behind it sits in `inits`
+    (the `@staticmethod` shape is the tell); an implementation holding a
+    connection is an adapter and belongs in `links`. The text already drew that
+    line for method style, so it now draws it for placement too, and says
+    neither is worth moving working code over.
 
 ## C — Stated as obvious, isn't
 

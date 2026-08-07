@@ -60,8 +60,9 @@ differs by port:
 - The services registry — concrete services as `@cached_property`
 - Middleware (web) or gate composition (CLI) — how the container reaches the
   entry points
-- The `TransactionProtocol` implementation — binding glue over the framework's
-  transaction machinery, not an adapter with a store behind it
+- The `TransactionProtocol` implementation, when it is binding glue over an
+  ambient ORM with no store behind it — one that holds a connection is an
+  adapter, and belongs in `links`
 - Lifecycle setup (opening and closing connections, transaction scope)
 
 ## Two flat registries
