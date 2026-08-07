@@ -182,10 +182,17 @@ does not get rediscovered and rewritten in six months.
     what Ludamus does, and the A1 rule appearing where a Django reader will
     meet it.
 
-- [ ] **B2.** `layers/gates.md` — the error-handling example calls
+- [x] **B2.** `layers/gates.md` — the error-handling example calls
   `read_by_slug(slug, sphere_id)`; `sphere_id` is never introduced. Ludamus
   vocabulary leaking into a generic page; reads as a missed multi-tenancy
   concept.
+
+    **Done.** Now `self.site_id` — `site` because `page` is already the gates
+    slicing axis and would read as vocabulary, and `self.` because the
+    unexplained bare name was half the problem: as view state it needs no
+    introduction, and the example is about the `except`, not the lookup. It was
+    the only Ludamus term left in the docs; the remaining mentions name the
+    project.
 
 - [ ] **B3.** `layers/pacts.md#slicing-axis` — the placement algorithm omits
   **service protocols**. Question 1 lists DTOs, write TypedDicts, errors and

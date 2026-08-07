@@ -80,7 +80,7 @@ redirect. There is no central error-to-status mapping.
 
 ```python
 try:
-    event = self.request.services.events.read_by_slug(slug, sphere_id)
+    event = self.request.services.events.read_by_slug(slug, self.site_id)
 except NotFoundError:
     messages.error(self.request, _("Event not found."))
     return {}, None
