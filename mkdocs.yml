@@ -72,3 +72,11 @@ nav:
     - Import Linter: guides/import-linter.md
   - Claude Skill: claude-skill/index.md
   - Changelog: changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/fancysnake/glimpse-architecture
+    - icon: fontawesome/solid/globe
+      link: https://fancysnake.dev
+      name: fancysnake.dev
