@@ -8,6 +8,18 @@ layers with strict, enforced import rules — the name is the layers: **G**ates,
 
 **Documentation:** <https://glimpse.fancysnake.dev/>
 
+## Claude Code skill
+
+This repository is a Claude Code plugin marketplace shipping the `glimpse`
+skill:
+
+```text
+/plugin marketplace add fancysnake/glimpse-architecture
+/plugin install glimpse@glimpse
+```
+
+Then `/glimpse` in any project.
+
 ## Local development
 
 ```bash

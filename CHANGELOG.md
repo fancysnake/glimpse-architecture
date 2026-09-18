@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+### Added
+
+- The repository is a Claude Code plugin marketplace. Install with
+  `/plugin marketplace add fancysnake/glimpse-architecture` then
+  `/plugin install glimpse@glimpse`
+
+### Changed
+
+- `SKILL.md` moved to `skills/glimpse/SKILL.md`, where the plugin loader finds
+  it. The raw-file curl install path changed accordingly
+
 ## [0.2.0] - 2026-08-07
 
 ### Added
