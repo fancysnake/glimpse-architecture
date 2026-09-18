@@ -9,6 +9,6 @@
       "siblings_only": true
     }
   },
-  "globs": ["docs/**/*.md", "*.md"],
+  "globs": ["docs/**/*.md", "skills/**/*.md", "*.md"],
   "ignores": ["site/**", "SKILL.src.md"]
 }

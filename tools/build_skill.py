@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "SKILL.src.md"
-TARGET = ROOT / "SKILL.md"
+TARGET = ROOT / "skills" / "glimpse" / "SKILL.md"
 
 INCLUDE = re.compile(r'^(?P<indent>[ \t]*)--8<--\s+"(?P<path>[^"]+)"\s*$')
 

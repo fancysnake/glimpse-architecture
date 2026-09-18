@@ -13,38 +13,39 @@ without repeating the rules each time.
 
 ## Installation
 
-1. Create the skills directory if it does not exist:
+The repository is a Claude Code plugin marketplace. Inside any Claude Code
+session:
 
-   ```text
-   mkdir -p ~/.claude/skills/glimpse
-   ```
+```text
+/plugin marketplace add fancysnake/glimpse-architecture
+/plugin install glimpse@glimpse
+```
 
-2. Save the skill file as `~/.claude/skills/glimpse/SKILL.md` — [download
-   it](SKILL.md.txt){ download="SKILL.md" }, or copy the contents from the block
-   below.
+Then invoke it in any project:
 
-3. Invoke it in any Claude Code session:
+```text
+/glimpse
+```
 
-   ```text
-   /glimpse
-   ```
-
-To install it straight from the command line:
+To install the bare skill file instead, without the plugin system:
 
 ```bash
 mkdir -p ~/.claude/skills/glimpse
-curl -fsSL https://raw.githubusercontent.com/fancysnake/glimpse-architecture/main/SKILL.md \
+curl -fsSL https://raw.githubusercontent.com/fancysnake/glimpse-architecture/main/skills/glimpse/SKILL.md \
   -o ~/.claude/skills/glimpse/SKILL.md
 ```
+
+Or [download it](SKILL.md.txt){ download="SKILL.md" } and save it to that
+path.
 
 ## Skill file
 
 The canonical copy lives at
-[`SKILL.md`](https://github.com/fancysnake/glimpse-architecture/blob/main/SKILL.md)
-in the repository root; the block below is generated from it. `SKILL.md` is
+[`skills/glimpse/SKILL.md`](https://github.com/fancysnake/glimpse-architecture/blob/main/skills/glimpse/SKILL.md)
+in the repository; the block below is generated from it. `SKILL.md` is
 itself assembled from `SKILL.src.md` and the shared rule fragments in `rules/`
 — editing it by hand is a mistake CI catches. Contributors run `mise run skill`.
 
 ````markdown
---8<-- "SKILL.md"
+--8<-- "skills/glimpse/SKILL.md"
 ````

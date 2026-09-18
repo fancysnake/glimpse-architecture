@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-18
+
+### Added
+
+- The repository is a Claude Code plugin marketplace:
+  `/plugin marketplace add fancysnake/glimpse-architecture`, then
+  `/plugin install glimpse@glimpse`
+- `SKILL.md` opens by naming the site as the authoritative form, so a review
+  with the skill loaded knows where the reasoning lives
+
+### Changed
+
+- **`edges/` is empty on a CLI, never absent.** The import contracts are
+  taken as a set on the first commit, and a contract can only name a module
+  that exists, so the package is created with one empty `__init__.py`. Six
+  pages said a CLI has no `edges/` at all
+- `SKILL.md` moved to `skills/glimpse/SKILL.md`, where the plugin loader finds
+  it. The raw-file curl URL moved with it
+- The site lives at <https://glimpse.fancysnake.dev/>, with repository and
+  author links in the footer
+
 ## [0.2.0] - 2026-08-07
 
 ### Added
@@ -127,13 +148,6 @@ and this project adheres to [Semantic Versioning].
 - Class-based views are no longer presented as the recommended Django shape;
   that is a framework choice, not a GLIMPSE one
 
-- **`edges/` is empty on a CLI, not absent.** All seven layers exist from the
-  first commit. The contracts are taken as a set on day one and a contract can
-  only name a module that exists, so a project with nothing to put in `edges`
-  still creates the package — tingle's is one empty `__init__.py`, and it is
-  what lets the `edges` and `inside-edges` contracts run. Six pages said a CLI
-  needs no `edges/` at all
-
 ### Fixed
 
 - `specs` no longer sends a constant a second layer needs to `edges`. It is
@@ -214,7 +228,8 @@ and this project adheres to [Semantic Versioning].
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/fancysnake/glimpse-architecture/releases/tag/v0.0.1

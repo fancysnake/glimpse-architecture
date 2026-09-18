@@ -1,0 +1,10 @@
+{
+  "name": "glimpse",
+  "description": "GLIMPSE architecture rules for Python projects: layer import rules, file layout and slicing, growth thresholds, and drift red flags.",
+  "version": "0.3.0",
+  "author": { "name": "fancysnake" },
+  "homepage": "https://glimpse.fancysnake.dev/",
+  "repository": "https://github.com/fancysnake/glimpse-architecture",
+  "license": "MIT",
+  "keywords": ["python", "architecture", "clean-architecture", "skill"]
+}

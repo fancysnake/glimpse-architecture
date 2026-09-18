@@ -1,0 +1,16 @@
+{
+  "name": "glimpse",
+  "owner": { "name": "fancysnake" },
+  "metadata": {
+    "description": "GLIMPSE architecture skill for Claude Code",
+    "version": "0.3.0"
+  },
+  "plugins": [
+    {
+      "name": "glimpse",
+      "source": "./",
+      "description": "GLIMPSE architecture rules for Python projects.",
+      "category": "development"
+    }
+  ]
+}

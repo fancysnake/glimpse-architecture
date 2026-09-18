@@ -1,6 +1,6 @@
 [project]
 name = "glimpse-architecture"
-version = "0.2.0"
+version = "0.3.0"
 description = "Framework-agnostinc clean architecture idea for Python projects"
 authors = [
     {name = "Radosław Ganczarek",email = "radoslaw@ganczarek.in"}
