@@ -2,10 +2,10 @@
 jobs = 1
 
 [tools]
-markdownlint-cli2 = "0.22.1"
-node = "25.9.0"
-pipx = "1.15.0"
-"pipx:poetry" = "2.3.2"
+markdownlint-cli2 = "0.23.3"
+node = "26.10.0"
+pipx = "1.17.6"
+"pipx:poetry" = "2.5.1"
 python = "3.14"
 
 [env]
@@ -21,12 +21,7 @@ poetry install
 """
 
 [tasks.update]
-run = """
-mise upgrade
-pip install -U pip
-poetry update
-poetry show -o
-"""
+run = ["mise upgrade --bump --minimum-release-age=7d", "poetry update", "poetry show -o"]
 
 [tasks.skill]
 description = "Regenerate SKILL.md from SKILL.src.md + rules/"
