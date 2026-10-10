@@ -25,7 +25,7 @@ Then `/glimpse` in any project.
 ```bash
 mise install
 poetry install
-poetry run mkdocs serve
+mise run serve
 ```
 
 Then open <http://127.0.0.1:8000>.
