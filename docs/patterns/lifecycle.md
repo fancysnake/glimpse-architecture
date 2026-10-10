@@ -8,21 +8,16 @@ gate directly, injecting the mills into its constructor.
 ## The trace
 
 ```mermaid
-sequenceDiagram
-    participant runtime as runtime (WSGI server)
-    participant edges
-    participant inits
-    participant gates
-    participant mills
-    participant links
-    runtime->>edges: process entry point
-    edges->>inits: settings name the middleware by string
-    inits->>gates: builds Services per request, attaches them to the request
-    gates->>mills: handler typed RootRequest calls request.services.#lt;name#gt;
-    mills->>links: enforces the rule via repo protocols + specs constants
-    links-->>mills: queries the store, returns a DTO
-    mills-->>gates: DTO
-    Note over gates: renders the DTO — template, serializer, stdout
+flowchart TD
+    runtime["runtime<br/>WSGI server"]
+    gates["gates<br/>renders the DTO"]
+    runtime -- "loads entry point" --> edges
+    edges -. "names middleware by string" .-> inits
+    inits -- "attaches Services to request" --> gates
+    gates -- "request.services.proposals" --> mills
+    mills -- "repo protocols, specs constants" --> links
+    links -. "DTO" .-> mills
+    mills -. "DTO" .-> gates
 ```
 
 ## Step by step
