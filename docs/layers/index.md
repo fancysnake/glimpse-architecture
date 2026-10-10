@@ -6,26 +6,16 @@ framework shell outside the import rules.
 
 ## Dependency diagram
 
-```text
-┌─────────────────────────────────────────────┐
-│  edges   (settings, wsgi/asgi — outside GLIMPSE)
-└─────────────────────────────────────────────┘
-         ↓ names inits in settings — string, not import
-┌──────────────────────────────────────────┐
-│                  inits                   │  DI container, middleware
-└──────────────────────────────────────────┘
-     ↓               ↓               ↓
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│  gates   │    │  mills   │    │  links   │
-└──────────┘    └──────────┘    └──────────┘
-     │               ↓               │
-     │          ┌──────────┐         │
-     │          │  specs   │  invariants — only mills may import
-     │          └──────────┘         │
-     ↓               ↓               ↓
-┌──────────────────────────────────────────┐
-│                  pacts                   │  contracts — depends on nothing
-└──────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    edges["edges<br/>settings, wsgi/asgi — outside GLIMPSE"]
+    inits["inits<br/>DI container, middleware"]
+    specs["specs<br/>invariants — only mills may import"]
+    pacts["pacts<br/>contracts — depends on nothing"]
+    edges -. "names inits in settings — string, not import" .-> inits
+    inits --> gates & mills & links
+    mills --> specs
+    gates & mills & links & specs --> pacts
 ```
 
 Arrows point in the direction of dependency (A → B means A imports B), with

@@ -7,14 +7,22 @@ gate directly, injecting the mills into its constructor.
 
 ## The trace
 
-```text
-runtime (WSGI server)
-  → edges    process entry point; settings name the inits middleware by string
-  → inits    middleware builds Services per request, attaches them to the request
-  → gates    handler typed RootRequest calls request.services.<name>
-  → mills    service enforces the rule via repo protocols + specs constants
-  → links    repository queries the store, returns a DTO
-  ← gates    renders the DTO — template, serializer, stdout
+```mermaid
+sequenceDiagram
+    participant runtime as runtime (WSGI server)
+    participant edges
+    participant inits
+    participant gates
+    participant mills
+    participant links
+    runtime->>edges: process entry point
+    edges->>inits: settings name the middleware by string
+    inits->>gates: builds Services per request, attaches them to the request
+    gates->>mills: handler typed RootRequest calls request.services.#lt;name#gt;
+    mills->>links: enforces the rule via repo protocols + specs constants
+    links-->>mills: queries the store, returns a DTO
+    mills-->>gates: DTO
+    Note over gates: renders the DTO — template, serializer, stdout
 ```
 
 ## Step by step
