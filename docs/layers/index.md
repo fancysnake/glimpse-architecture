@@ -13,14 +13,16 @@ flowchart TD
     specs["specs<br/>invariants — only mills may import"]
     pacts["pacts<br/>contracts — depends on nothing"]
     edges -. "names inits in settings — string, not import" .-> inits
-    inits --> gates & mills & links
+    inits -. "injects (web) / imports (CLI)" .-> gates
+    inits --> mills & links
     mills --> specs
-    gates & mills & links & specs --> pacts
+    gates & mills & links & specs & inits --> pacts
 ```
 
 Arrows point in the direction of dependency (A → B means A imports B), with
-one exception: `edges → inits` is configuration, not import — settings name
-the middleware by dotted string, and nothing ever imports `edges`.
+two exceptions, both dotted: `edges → inits` is configuration, not import —
+settings name the middleware by dotted string, and nothing ever imports
+`edges`; `inits → gates` is injection on the web and import only in CLI.
 
 `gates`, `mills`, and `links` are siblings that never import each other, and
 `pacts` is the only layer any of them may reach. Everything they need from one

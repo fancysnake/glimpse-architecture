@@ -10,14 +10,13 @@ gate directly, injecting the mills into its constructor.
 ```mermaid
 flowchart TD
     runtime["runtime<br/>WSGI server"]
-    gates["gates<br/>renders the DTO"]
     runtime -- "loads entry point" --> edges
     edges -. "names middleware by string" .-> inits
     inits -- "attaches Services to request" --> gates
     gates -- "request.services.proposals" --> mills
-    mills -- "repo protocols, specs constants" --> links
+    mills -- "via repo protocol" --> links
     links -. "DTO" .-> mills
-    mills -. "DTO" .-> gates
+    mills -. "DTO, rendered" .-> gates
 ```
 
 ## Step by step

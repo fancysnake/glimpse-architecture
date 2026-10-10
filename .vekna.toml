@@ -13,6 +13,4 @@ modules = [
 [cabinet]
 # The https twin of `origin`: a cast has no terminal for an ssh passphrase.
 remote = "https-origin"
-# Casts run unattended at night; nobody is there to unlock a signing key.
-sign_commits = false
 gate = "mise run check"
