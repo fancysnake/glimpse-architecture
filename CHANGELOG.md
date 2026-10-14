@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-10
+
+### Added
+
+- `mise run serve` serves the docs site with live reload
+
+### Changed
+
+- The layers overview and the request lifecycle draw their diagrams in
+  Mermaid, which the site renders, instead of ASCII art
+- The layers diagram draws `inits → gates` dotted: injection on the web, an
+  import only on a CLI
+
+### Fixed
+
+- `poetry install` pulls in `mkdocs-material`, so the docs build locally
+
 ## [0.3.0] - 2026-09-18
 
 ### Added
@@ -228,7 +245,8 @@ and this project adheres to [Semantic Versioning].
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.0.1...v0.1.0

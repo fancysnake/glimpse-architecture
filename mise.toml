@@ -42,3 +42,7 @@ run = "mkdocs build --strict"
 [tasks.check]
 description = "Everything CI runs"
 depends = ["skill-check", "lint", "docs"]
+
+[tasks.serve]
+description = "Serve the docs site with live reload"
+run = "mkdocs serve"
