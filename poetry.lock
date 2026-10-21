@@ -414,19 +414,19 @@ files = [
 
 [[package]]
 name = "claude-agent-sdk"
-version = "0.2.165"
+version = "0.2.166"
 description = "Python SDK for Claude Code"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 markers = "python_version == \"3.14\""
 files = [
-    {file = "claude_agent_sdk-0.2.165-py3-none-macosx_11_0_arm64.whl", hash = "sha256:7f7017bb59eaf77b9a7c7ce3b9ed2c8a397b8201c8630f011bb1b955290f06e4"},
-    {file = "claude_agent_sdk-0.2.165-py3-none-macosx_11_0_x86_64.whl", hash = "sha256:f4b5c6f536062e3af72357b1235f05ad4513230a32a3c639341a91a607d2df1e"},
-    {file = "claude_agent_sdk-0.2.165-py3-none-manylinux_2_17_aarch64.whl", hash = "sha256:46a47e1e1075a8f2b7976f6bd5aa06c5610cb322c47cdc5b728fb25d02691164"},
-    {file = "claude_agent_sdk-0.2.165-py3-none-manylinux_2_17_x86_64.whl", hash = "sha256:9dbee4bfc69f0bb27ee455afdc19d78f958540a99217d2e28831fb9b7d496f08"},
-    {file = "claude_agent_sdk-0.2.165-py3-none-win_amd64.whl", hash = "sha256:cf41dc1b1019bc7321b695d621fc94e6d8982c095cfb7d433d5c293e356a2404"},
-    {file = "claude_agent_sdk-0.2.165.tar.gz", hash = "sha256:1bfa8e7a6bb36e82de9a12324c9bcfa6eebd4f96ee5890f0c656d50445240ff8"},
+    {file = "claude_agent_sdk-0.2.166-py3-none-macosx_11_0_arm64.whl", hash = "sha256:35f2082ba76d851af76954e8a19c0bd9d5b81a49a3efc7864e2d9e6ff393e743"},
+    {file = "claude_agent_sdk-0.2.166-py3-none-macosx_11_0_x86_64.whl", hash = "sha256:1c7697286fd6506911acafdbc1ae922b2c92db18a42855dc0c1f74733f3adefa"},
+    {file = "claude_agent_sdk-0.2.166-py3-none-manylinux_2_17_aarch64.whl", hash = "sha256:3ba783eaaf0beba4cbc7278391ad4d5e4d7ec5cbc81355fcfea1fa865c0cebb7"},
+    {file = "claude_agent_sdk-0.2.166-py3-none-manylinux_2_17_x86_64.whl", hash = "sha256:81d34634ef4fb4c0782fd7d5354de1b558b776e399a9be3aca771cc528c7ad2e"},
+    {file = "claude_agent_sdk-0.2.166-py3-none-win_amd64.whl", hash = "sha256:d53ba0e8152c88b2e9eaf61d684b2ed8621e3785cdc9f4be5378a6d0f86304be"},
+    {file = "claude_agent_sdk-0.2.166.tar.gz", hash = "sha256:6dbd129cf8bdae065e5504f3619176aa23c2d864afffc14464df387c72edde30"},
 ]
 
 [package.dependencies]
@@ -725,14 +725,14 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "markdown"
-version = "3.11"
+version = "3.11.1"
 description = "Python implementation of John Gruber's Markdown."
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "markdown-3.11-py3-none-any.whl", hash = "sha256:cd6c89e7eb308c8b332ed673215a52d208a43f8bacc030b1419376129408719e"},
-    {file = "markdown-3.11.tar.gz", hash = "sha256:180224db6aed87ba9ce1f2781ebcd5826253de8ff637112090e24b84502bbf9f"},
+    {file = "markdown-3.11.1-py3-none-any.whl", hash = "sha256:f1fa378ba5d682900c9ecb55ccceacca936016dda7c3b27097e8ae03ff78feb5"},
+    {file = "markdown-3.11.1.tar.gz", hash = "sha256:496f4f80f9ebd3395a04c8ec9595c40bbe8ec19e9c67d21fe071a1643e876606"},
 ]
 
 [package.extras]
