@@ -15,10 +15,7 @@ _.python.venv = { path = ".venv", create = true }
 run = "poetry"
 
 [tasks.install]
-run = """
-pip install poetry
-poetry install
-"""
+run = "poetry install --no-root"
 
 [tasks.update]
 run = ["mise upgrade --bump --exclude python --minimum-release-age=7d --local", "poetry update", "poetry show -o"]
