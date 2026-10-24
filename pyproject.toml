@@ -9,14 +9,11 @@ license = "MIT License"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "mkdocs (>=1.6.1,<2.0.0)",
     "mkdocs-material (>=9.7.7,<10.0.0)"
 ]
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry]
+package-mode = false
 
 [dependency-groups]
 dev = [
