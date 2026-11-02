@@ -18,7 +18,7 @@ The layers, their import rules and the slicing axes stay as they are. Read
 | Write `TypedDict` without `id`         | `type CreateX = Omit<X, "id">`                                             |
 | Coarse error class                     | `class NotFoundError extends Error`                                        |
 | `@cached_property` on `Services`       | Fields built in a per-request factory, or a `??=` getter                   |
-| `@functools.lru_cache` factory         | Module-level variable assigned once with `??=`                             |
+| `@functools.lru_cache` factory         | A `globalThis` slot assigned once with `??=`                               |
 | `__init__.py` facade                   | `index.ts` barrel                                                          |
 | `RootRequest` typing-only subclass     | Declaration merging on the framework's request locals                      |
 | `[project.scripts]` → `inits.cli:run`  | `package.json` `bin` → a file in `inits`                                   |
@@ -26,11 +26,11 @@ The layers, their import rules and the slicing axes stay as they are. Read
 | `MagicMock` for a repository protocol  | An object literal of `vi.fn()` (Vitest) or `jest.fn()`                     |
 | `with transaction.atomic():`           | `await transaction.atomic(async () => { ... })`                            |
 
-Two Python caveats disappear. A class that `implements` an interface and
+One Python caveat disappears: a class that `implements` an interface and
 misses a method fails to compile, so the "an explicit `Protocol` subclass
-inherits stub bodies" trap has no TypeScript equivalent. And a type-only
-import (`import type`) is erased at runtime but is still a dependency on the
-layer it names: the import rules apply to it.
+inherits stub bodies" trap has no TypeScript equivalent. One is new: a
+type-only import (`import type`) is erased at runtime but is still a
+dependency on the layer it names, and the import rules apply to it.
 
 ## Project layout
 
@@ -92,6 +92,10 @@ export class NotFoundError extends Error {
   override name = "NotFoundError";
 }
 
+export class DatabaseConstraintError extends Error {
+  override name = "DatabaseConstraintError";
+}
+
 export interface ProposalRepository {
   get(id: number): Promise<Proposal>;
   markPublished(id: number): Promise<void>;
@@ -103,6 +107,7 @@ export interface AuditRepository {
 
 export interface Transaction {
   atomic<T>(work: () => Promise<T>): Promise<T>;
+  savepoint<T>(work: () => Promise<T>): Promise<T>;
 }
 
 export interface ProposalService {
@@ -118,8 +123,9 @@ export interface Services {
 **The transaction takes a callback.** TypeScript has no `with`, and
 `await using` cannot tell a dispose that the block threw, so it cannot choose
 between commit and rollback. `atomic(work)` commits when `work` resolves and
-rolls back when it rejects. `savepoint(work)` follows the same shape and
-translates a constraint violation into a `pacts` error.
+rolls back when it rejects. `savepoint(work)` follows the same shape: a
+violated constraint rolls back only its block and surfaces as
+`DatabaseConstraintError`, leaving the surrounding transaction usable.
 
 **A zod schema is a DTO too.** When a gate parses input with zod, the schema
 is the contract and the type comes from `z.infer`. It lives in `pacts` beside
@@ -170,13 +176,35 @@ is an entry point and lives in gates.
 
 ```typescript
 // src/links/db/postgres.ts
-import type pg from "pg";
+import { AsyncLocalStorage } from "node:async_hooks";
+
+import pg from "pg";
 
 import {
+  DatabaseConstraintError,
   NotFoundError,
   type Proposal,
   type ProposalRepository,
+  type Transaction,
 } from "../../pacts";
+
+/** The pool, and the client of the transaction in progress. */
+export class PgDatabase {
+  readonly transaction = new AsyncLocalStorage<pg.PoolClient>();
+
+  constructor(readonly pool: pg.Pool) {}
+
+  /** Runs on the transaction's client inside `atomic`, the pool outside. */
+  query<R extends pg.QueryResultRow>(
+    text: string,
+    values?: unknown[],
+  ): Promise<pg.QueryResult<R>> {
+    const client = this.transaction.getStore();
+    return client
+      ? client.query<R>(text, values)
+      : this.pool.query<R>(text, values);
+  }
+}
 
 interface ProposalRow {
   id: number;
@@ -191,10 +219,10 @@ const toProposal = (row: ProposalRow): Proposal => ({
 });
 
 export class PgProposalRepository implements ProposalRepository {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly db: PgDatabase) {}
 
   async get(id: number): Promise<Proposal> {
-    const { rows } = await this.pool.query<ProposalRow>(
+    const { rows } = await this.db.query<ProposalRow>(
       "SELECT id, title, author_id FROM proposals WHERE id = $1",
       [id],
     );
@@ -204,7 +232,7 @@ export class PgProposalRepository implements ProposalRepository {
   }
 
   async markPublished(id: number): Promise<void> {
-    await this.pool.query(
+    await this.db.query(
       "UPDATE proposals SET published = true WHERE id = $1",
       [id],
     );
@@ -213,8 +241,58 @@ export class PgProposalRepository implements ProposalRepository {
 ```
 
 The row type and the mapping stay inside the adapter; only `Proposal` leaves.
-`PgAuditRepository` follows the same pattern. A `Transaction` implementation
-that holds a connection is an adapter like this one and lives in `links`.
+`PgAuditRepository` follows the same pattern.
+
+The `Transaction` implementation holds a connection, so it is an adapter too,
+in the same file:
+
+```typescript
+export class PgTransaction implements Transaction {
+  constructor(private readonly db: PgDatabase) {}
+
+  async atomic<T>(work: () => Promise<T>): Promise<T> {
+    if (this.db.transaction.getStore()) return work();
+    const client = await this.db.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await this.db.transaction.run(client, work);
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async savepoint<T>(work: () => Promise<T>): Promise<T> {
+    const client = this.db.transaction.getStore();
+    if (!client) return this.atomic(() => this.savepoint(work));
+    await client.query("SAVEPOINT sp");
+    try {
+      const result = await work();
+      await client.query("RELEASE SAVEPOINT sp");
+      return result;
+    } catch (error) {
+      await client.query("ROLLBACK TO SAVEPOINT sp");
+      // SQLSTATE class 22 is a data exception, 23 an integrity violation.
+      if (
+        error instanceof pg.DatabaseError &&
+        /^2[23]/.test(error.code ?? "")
+      ) {
+        throw new DatabaseConstraintError(error.message, { cause: error });
+      }
+      throw error;
+    }
+  }
+}
+```
+
+The repositories and the transaction share one `PgDatabase`. Inside `atomic`,
+`AsyncLocalStorage` hands every query the client that ran `BEGIN`, across
+each `await`, without the client passing through `mills`. A nested `atomic`
+joins the outer transaction.
 
 A query builder or ORM (Drizzle, Kysely, Prisma) changes nothing here: its
 schema and generated types are the adapter's models, internal to
@@ -228,23 +306,26 @@ import pg from "pg";
 
 import {
   PgAuditRepository,
+  PgDatabase,
   PgProposalRepository,
   PgTransaction,
 } from "../links/db/postgres";
 import { Proposals } from "../mills";
 import type { Services } from "../pacts";
 
-let pool: pg.Pool | undefined;
+const shared = globalThis as typeof globalThis & { pgPool?: pg.Pool };
 
-/** One pool per process. */
+/** One pool per process, kept when a dev server re-evaluates this module. */
 function getPool(): pg.Pool {
-  pool ??= new pg.Pool({ connectionString: process.env.DATABASE_URL });
-  return pool;
+  shared.pgPool ??= new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+  return shared.pgPool;
 }
 
 /** One container per request. */
 export function createServices(): Services {
-  const db = getPool();
+  const db = new PgDatabase(getPool());
   return {
     proposals: new Proposals(
       new PgProposalRepository(db),
@@ -264,11 +345,6 @@ request object as the thread-safety seam — does not apply. A per-request
 container is still the default, because request-scoped state (the current
 user, an open transaction) has an obvious home. A process-wide `Services` is
 fine while no service holds request state.
-
-!!! note "Dev servers re-evaluate modules"
-    Vite-based dev servers can re-run a module after an edit, so a
-    module-level `pool` leaks a new pool each time. Keep process-lifetime
-    objects on `globalThis` when the dev server re-evaluates modules.
 
 ## gates — and how they get services
 
@@ -330,8 +406,9 @@ call site and decides it means 404 — there is no central error-to-status map.
 
 File-based routing puts gates where the framework looks for them —
 `src/pages/` in Astro, `src/routes/` in SvelteKit. Those directories are the
-web adapter of `gates`; name them in the gates rule instead of moving them
-under `gates/web/`. A browser-side island or component is a gate too.
+`web` port of `gates`; name them in the `routed` pattern
+[below](#enforcing-the-imports) instead of moving them under `gates/web/`. A
+browser-side island or component is a gate too.
 
 The framework also dictates where the root middleware file sits. Keep the
 code in `inits` and leave a one-line re-export at the framework's path:
@@ -384,13 +461,16 @@ consequences:
 
 [dependency-cruiser](https://github.com/sverweij/dependency-cruiser) checks
 resolved module paths, the way `importlinter` checks module names, so path
-aliases and `index.ts` files do not hide an import. Each rule below forbids
-what one [import contract](import-linter.md) forbids.
+aliases and `index.ts` files do not hide an import. The rules below mirror
+the [import contracts](import-linter.md), with one gap: `edges` importing
+project code is left to review.
 
 ```javascript
 // .dependency-cruiser.cjs
 const layer = (name) => `^src/${name}([.]ts$|/)`;
-const gates = "^src/(gates|pages|components)/";
+// Where the framework routes from: the web port of gates.
+const routed = "^src/(pages|components)/";
+const gates = `^src/gates/|${routed}`;
 
 module.exports = {
   forbidden: [
@@ -437,6 +517,22 @@ module.exports = {
       to: { dependencyTypes: ["core"] },
     },
     {
+      name: "no effectful packages in pacts, specs, mills",
+      severity: "error",
+      from: { path: layer("(pacts|specs|mills)") },
+      to: { path: "node_modules/(@types/)?(pg|undici)/" },
+    },
+    {
+      name: "edges",
+      severity: "error",
+      from: { path: "^src/" },
+      to: {
+        pathNot: "^(src|node_modules)/",
+        dependencyTypesNot: ["core"],
+        couldNotResolve: false,
+      },
+    },
+    {
       name: "ports are independent",
       severity: "error",
       from: { path: "^src/(gates|links)/([^/]+)/" },
@@ -446,6 +542,18 @@ module.exports = {
       },
     },
     {
+      name: "routed directories are the web port",
+      severity: "error",
+      from: { path: routed },
+      to: { path: "^src/gates/", pathNot: "^src/gates/web/" },
+    },
+    {
+      name: "other ports stay out of routed directories",
+      severity: "error",
+      from: { path: "^src/gates/", pathNot: "^src/gates/web/" },
+      to: { path: routed },
+    },
+    {
       name: "no cycles",
       severity: "error",
       from: {},
@@ -453,34 +561,49 @@ module.exports = {
     },
   ],
   options: {
+    doNotFollow: { path: "node_modules" },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: "tsconfig.json" },
   },
 };
 ```
 
-Run it with `depcruise src` in CI. Adjust the `gates` pattern to the
-directories your framework routes from.
+Run it with `depcruise src` in CI. Set `routed` to the directories your
+framework routes from — `^src/routes/` in SvelteKit.
 
 - **`tsPreCompilationDeps: true` is required.** Without it, dependency-cruiser
   reads the compiled output, where `import type` is gone, and type-only
   imports slip past every rule.
-- **`dependencyTypes: ["core"]` bans Node built-ins.** That is the
-  [mills framework contract](import-linter.md#the-mills-framework-contract)
-  at level C for Node. Add the effectful npm packages your project uses —
-  `pg`, `undici`, an SDK — as `to.path` entries matching
-  `node_modules/{name}/`.
+- **`dependencyTypes: ["core"]` bans Node built-ins**, and the rule after it
+  bans effectful npm packages. List the ones your project uses — a driver, an
+  HTTP client, an SDK; `@types/` catches a type-only import. Together they
+  are the [mills framework
+  contract](import-linter.md#the-mills-framework-contract) at level C for
+  imports. Globals need the linter, below.
+- **`edges` is everything outside `src/` and `node_modules/`.** The `edges`
+  rule stops project code importing `package.json` or `vite.config.ts`. It
+  skips imports that resolve to no file, such as `astro:middleware`. A
+  generated type directory that a file in `src/` references, such as
+  `.astro/`, goes into its `pathNot`. A config file importing `src/` is not
+  caught: `depcruise src` does not read config files.
 - **Type-only imports count.** `pacts` importing a type from `mills` is still
   `pacts → mills`.
 
 **A lighter option** is the linter's `no-restricted-imports` with regex
 patterns, scoped per layer through `overrides` (ESLint and oxlint both
 support it). It needs no extra tool, but it matches the import string, not
-the resolved file: relative paths need patterns like `^(\.\./)+mills/`, and a
-path alias such as `@/mills` needs its own pattern.
+the resolved file: relative paths need patterns like `^(\.\.?/)+mills(/|$)`,
+and a path alias such as `@/mills` needs its own pattern.
 
-Neither tool sees calls. Timers in a mill, a gate opening a transaction and a
-business rule in a zod refinement stay review concerns, as listed in
+**Globals need no import**, so no import rule sees `fetch`, `process`,
+`setTimeout`, `setInterval` or `WebSocket`. Ban them in `pacts`, `specs` and
+`mills` with the linter's `no-restricted-globals`, scoped through `overrides`
+the same way. `Date` and `crypto` stay allowed: the clock and a random draw
+are fine in a mill.
+
+Neither tool sees calls. A gate opening a transaction, a call through
+`globalThis.fetch` and a business rule in a zod refinement stay review
+concerns, as listed in
 [What the linter cannot catch](import-linter.md#what-the-linter-cannot-catch).
 
 ## Testing
@@ -495,15 +618,29 @@ import { expect, it, vi } from "vitest";
 import { Proposals } from "./mills";
 
 it("publishes and audits in one transaction", async () => {
-  const proposals = { get: vi.fn(), markPublished: vi.fn() };
-  const audit = { record: vi.fn() };
+  let inside = false;
+  const opened = vi.fn();
   const transaction = {
-    atomic: vi.fn(<T>(work: () => Promise<T>) => work()),
+    async atomic<T>(work: () => Promise<T>): Promise<T> {
+      opened();
+      inside = true;
+      try {
+        return await work();
+      } finally {
+        inside = false;
+      }
+    },
+    savepoint: <T>(work: () => Promise<T>): Promise<T> => work(),
   };
+  const inTransaction = async () => {
+    expect(inside).toBe(true);
+  };
+  const proposals = { get: vi.fn(), markPublished: vi.fn(inTransaction) };
+  const audit = { record: vi.fn(inTransaction) };
 
   await new Proposals(proposals, audit, transaction).publish(7);
 
-  expect(transaction.atomic).toHaveBeenCalledOnce();
+  expect(opened).toHaveBeenCalledOnce();
   expect(proposals.markPublished).toHaveBeenCalledWith(7);
   expect(audit.record).toHaveBeenCalledWith({
     action: "publish",
