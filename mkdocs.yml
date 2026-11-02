@@ -74,6 +74,7 @@ nav:
   - Guides:
     - Django: guides/django.md
     - Import Linter: guides/import-linter.md
+    - TypeScript: guides/typescript.md
   - Claude Skill: claude-skill/index.md
   - Changelog: changelog.md
 

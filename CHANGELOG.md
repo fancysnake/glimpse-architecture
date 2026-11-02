@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+### Added
+
+- A TypeScript guide: the Python-to-TypeScript translation, request typing
+  per framework, browser bundles, and dependency-cruiser rules matching the
+  import contracts
+
 ## [0.4.0] - 2026-10-10
 
 ### Added
