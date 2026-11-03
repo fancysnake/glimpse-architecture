@@ -248,36 +248,51 @@ in the same file:
 
 ```typescript
 export class PgTransaction implements Transaction {
+  private savepoints = 0;
+
   constructor(private readonly db: PgDatabase) {}
 
   async atomic<T>(work: () => Promise<T>): Promise<T> {
     if (this.db.transaction.getStore()) return work();
     const client = await this.db.pool.connect();
+    let broken: Error | undefined;
     try {
       await client.query("BEGIN");
       const result = await this.db.transaction.run(client, work);
       await client.query("COMMIT");
       return result;
     } catch (error) {
-      await client.query("ROLLBACK");
+      await client.query("ROLLBACK").catch((rollbackError: Error) => {
+        broken = rollbackError;
+      });
       throw error;
     } finally {
-      client.release();
+      // Releasing with an error discards the client instead of pooling it.
+      client.release(broken);
     }
   }
 
   async savepoint<T>(work: () => Promise<T>): Promise<T> {
     const client = this.db.transaction.getStore();
     if (!client) return this.atomic(() => this.savepoint(work));
-    await client.query("SAVEPOINT sp");
+    // ROLLBACK TO keeps its savepoint, so a reused name hits the inner one.
+    const name = `sp${++this.savepoints}`;
+    await client.query(`SAVEPOINT ${name}`);
     try {
       const result = await work();
-      await client.query("RELEASE SAVEPOINT sp");
+      await client.query(`RELEASE SAVEPOINT ${name}`);
       return result;
     } catch (error) {
-      await client.query("ROLLBACK TO SAVEPOINT sp");
+      const rolledBack = await client
+        .query(`ROLLBACK TO SAVEPOINT ${name}`)
+        .then(
+          () => true,
+          () => false,
+        );
       // SQLSTATE class 22 is a data exception, 23 an integrity violation.
+      // Without the rollback the transaction is aborted, so it stays fatal.
       if (
+        rolledBack &&
         error instanceof pg.DatabaseError &&
         /^2[23]/.test(error.code ?? "")
       ) {
@@ -317,9 +332,10 @@ const shared = globalThis as typeof globalThis & { pgPool?: pg.Pool };
 
 /** One pool per process, kept when a dev server re-evaluates this module. */
 function getPool(): pg.Pool {
+  // Without an error listener, an idle client's error crashes the process.
   shared.pgPool ??= new pg.Pool({
     connectionString: process.env.DATABASE_URL,
-  });
+  }).on("error", (error) => console.error(error));
   return shared.pgPool;
 }
 
