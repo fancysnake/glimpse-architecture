@@ -275,7 +275,8 @@ export class PgTransaction implements Transaction {
   async savepoint<T>(work: () => Promise<T>): Promise<T> {
     const client = this.db.transaction.getStore();
     if (!client) return this.atomic(() => this.savepoint(work));
-    // ROLLBACK TO keeps its savepoint, so a reused name hits the inner one.
+    // A failed ROLLBACK TO or RELEASE keeps the savepoint, so a reused name
+    // would hit the inner one.
     const name = `sp${++this.savepoints}`;
     await client.query(`SAVEPOINT ${name}`);
     try {
@@ -285,6 +286,7 @@ export class PgTransaction implements Transaction {
     } catch (error) {
       const rolledBack = await client
         .query(`ROLLBACK TO SAVEPOINT ${name}`)
+        .then(() => client.query(`RELEASE SAVEPOINT ${name}`))
         .then(
           () => true,
           () => false,
