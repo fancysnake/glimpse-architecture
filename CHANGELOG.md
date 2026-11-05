@@ -7,11 +7,22 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-05
+
 ### Added
 
 - A TypeScript guide: the Python-to-TypeScript translation, request typing
   per framework, browser bundles, and dependency-cruiser rules matching the
   import contracts
+
+### Changed
+
+- CI runs `mise run check`, taking tool versions from `mise.toml` and
+  `poetry.lock`
+
+### Fixed
+
+- `mise run install` succeeds on a repo with no package
 
 ## [0.4.0] - 2026-10-10
 
@@ -251,7 +262,8 @@ and this project adheres to [Semantic Versioning].
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.1.0...v0.2.0
