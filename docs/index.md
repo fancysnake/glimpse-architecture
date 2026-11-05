@@ -84,3 +84,5 @@ exceptions without explicit approval.
   calls are fine and which are smells
 - [Testing](patterns/testing.md) — the layer under test dictates the test type
 - [Django guide](guides/django.md) — implementing GLIMPSE in a Django project
+- [TypeScript guide](guides/typescript.md) — the same layers in a TypeScript
+  project
