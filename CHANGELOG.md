@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning].
 ### Added
 
 - Dependency vulnerabilities are checked by Trivy against `poetry.lock`, in
-  `mise run trivy`, `mise run check`, `mise run update` and a CI job
+  `mise run trivy`, `mise run check` and `mise run update`
 
 ## [0.5.0] - 2026-11-05
 

@@ -19,7 +19,7 @@ run = "poetry"
 run = "poetry install"
 
 [tasks.update]
-run = ["mise upgrade --bump --exclude python --minimum-release-age=7d --local", "poetry update", { task = "trivy" }, "poetry show -o"]
+run = ["mise upgrade --bump --exclude python --minimum-release-age=7d --local", "poetry update", "poetry show -o", { task = "trivy" }]
 
 [tasks.skill]
 description = "Regenerate SKILL.md from SKILL.src.md + rules/"
@@ -38,8 +38,8 @@ description = "Build the docs site strictly"
 run = "mkdocs build --strict"
 
 [tasks.trivy]
-description = "Scan the lockfiles for known vulnerabilities with Trivy"
-run = "trivy fs --scanners vuln --include-dev-deps --skip-dirs .venv --exit-code 1 --quiet ."
+description = "Scan poetry.lock for known vulnerabilities with Trivy"
+run = "trivy fs --scanners vuln --include-dev-deps --exit-code 1 --quiet poetry.lock"
 
 [tasks.check]
 description = "Everything CI runs"
