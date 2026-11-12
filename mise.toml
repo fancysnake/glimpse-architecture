@@ -4,9 +4,10 @@ jobs = 1
 [tools]
 markdownlint-cli2 = "0.24.0"
 node = "26.13.0"
-pipx = "1.18.12"
+pipx = "1.18.13"
 "pipx:poetry" = "2.5.1"
 python = "3.15"
+trivy = "0.76.1"
 
 [env]
 _.python.venv = { path = ".venv", create = true }
@@ -18,7 +19,7 @@ run = "poetry"
 run = "poetry install"
 
 [tasks.update]
-run = ["mise upgrade --bump --exclude python --minimum-release-age=7d --local", "poetry update", "poetry show -o"]
+run = ["mise upgrade --bump --exclude python --minimum-release-age=7d --local", "poetry update", "poetry show -o", { task = "trivy" }]
 
 [tasks.skill]
 description = "Regenerate SKILL.md from SKILL.src.md + rules/"
@@ -36,9 +37,13 @@ run = "markdownlint-cli2"
 description = "Build the docs site strictly"
 run = "mkdocs build --strict"
 
+[tasks.trivy]
+description = "Scan poetry.lock for known vulnerabilities with Trivy"
+run = "trivy fs --scanners vuln --include-dev-deps --exit-code 1 --quiet poetry.lock"
+
 [tasks.check]
 description = "Everything CI runs"
-depends = ["skill-check", "lint", "docs"]
+depends = ["skill-check", "lint", "docs", "trivy"]
 
 [tasks.serve]
 description = "Serve the docs site with live reload"
