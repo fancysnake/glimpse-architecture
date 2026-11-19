@@ -2,7 +2,7 @@
 jobs = 1
 
 [tools]
-markdownlint-cli2 = "0.24.0"
+markdownlint-cli2 = "0.24.1"
 node = "26.13.0"
 pipx = "1.18.13"
 "pipx:poetry" = "2.5.1"
