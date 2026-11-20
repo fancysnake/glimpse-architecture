@@ -15,7 +15,3 @@ dependencies = [
 [tool.poetry]
 package-mode = false
 
-[dependency-groups]
-dev = [
-    "cabinet @ https://github.com/fancysnake/cabinet/releases/download/v5.0.0/cabinet-5.0.0-py3-none-any.whl",
-]
