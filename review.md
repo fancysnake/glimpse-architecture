@@ -145,8 +145,10 @@ does not get rediscovered and rewritten in six months.
     **Out of scope — this was the finding that exposed the bad premise.** The
     arrangement followed a need and breaks no import rule, so it is creative
     use, not an undocumented variant owed a page. Documenting every legitimate
-    shape is unbounded work. Answered generally instead: *[What is fixed, and
-    what is guidance](docs/index.md)* on the home page, the same paragraph
+    shape is unbounded work. A [variant](docs/variants/index.md) is narrower:
+    a documented approach that carries its own test rule. Answered generally
+    instead: *[What is fixed, and what is
+    guidance](docs/index.md)* on the home page, the same paragraph
     in `SKILL.src.md` so the skill stops treating silence as violation, and a
     note on the vekna entry in `examples.md`.
 

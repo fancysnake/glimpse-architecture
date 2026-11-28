@@ -65,9 +65,10 @@ knows the concrete classes and does the wiring.
 ### 4. Mills have no side-effect imports
 
 No ORM, no HTTP layer, no CLI parser, no settings access. A mill sees protocols
-and DTOs from `pacts`, constants from `specs`, and pure helpers from anywhere —
-[package names are not the test](../layers/mills.md). If a mill's test needs a
-live database, the mill has leaked infrastructure.
+and DTOs from `pacts`, constants and decision functions from `specs`, and pure
+helpers from anywhere — [package names are not the
+test](../layers/mills.md). If a mill's unit test needs a live database, the
+mill has leaked infrastructure.
 
 ### 5. Writes use TypedDicts
 

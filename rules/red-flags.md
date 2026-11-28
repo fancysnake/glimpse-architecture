@@ -69,7 +69,7 @@
   or comes from the framework's settings accessor where there is one.
 
 **specs reading from `os.environ` or `settings`, or performing IO**
-: It is a constants layer. Environment-dependent values enter at `inits`.
+: It is a pure layer. Environment-dependent values enter at `inits`.
 
 ### mills
 
@@ -85,6 +85,21 @@
 **A page axis inside mills**
 : Gates mirror the interface, mills mirror the domain. A sitemap in `mills` is
   the interface leaking inward.
+
+### mills variants
+
+**A `specs` function that takes a protocol, reads the clock, or raises a
+business error**
+: A decision function receives values and returns a decision. The mill reads,
+  passes `now` in, and turns a refusal into a `pacts` error.
+
+**A mill with no unit test that still branches on a business rule**
+: Only a mill whose every rule moved to `specs` drops its unit test. A mill
+  that still decides is a rules-in-mills service.
+
+**A rules-in-specs mill with fewer gate tests than decision kinds**
+: The integration tests are the mill's only tests. Each kind of decision the
+  function can return needs one.
 
 ### links
 

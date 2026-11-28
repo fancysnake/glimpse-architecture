@@ -102,8 +102,8 @@ class Services:
 `Services` takes no arguments and builds its own dependencies. Dependency
 injection exists to type *boundaries* through protocols, and inside `inits`
 there are no boundaries — everything is concrete, because `inits` is the
-composition root. The registries are production wiring only: tests construct
-a mill directly with fakes and never go through them.
+composition root. The registries are production wiring only: a unit test
+constructs a mill directly with fakes and never goes through them.
 
 This is where the interface segregation in
 [`mills`](mills.md#services-take-the-protocols-they-use) is paid for: `inits`

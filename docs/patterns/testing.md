@@ -10,7 +10,8 @@ way it deserves. Testing them the same way throws that separation away.
 
 | Layer | Test type | Mocking |
 | --- | --- | --- |
-| `mills` — pure-logic core | **unit** | Mock at the highest level; assert every mock call |
+| `specs`, pure helpers — pure code | **unit** | None |
+| `mills` — IO-free core | **unit**, or **integration** through the gate — [by variant](../variants/index.md) | By variant |
 | `links`, `gates`, adapters, templates — IO-bearing boundary | **integration** | Mock at the lowest level, or not at all; assert side effects |
 
 ## Where tests live
@@ -20,7 +21,7 @@ the code:
 
 ```text
 tests/
-├── unit/            # mills, plus pure helpers from any layer
+├── unit/            # mills, specs, plus pure helpers from any layer
 └── integration/     # gates (by port + page), links (by port + adapter)
 ```
 
@@ -34,17 +35,16 @@ about the layers constrains fixtures, factories, or helpers either — a test ma
 reach for whatever it needs to set the world up, including an adapter's
 internals.
 
-## Unit tests: mills
+## Mills: the variant decides
 
-`mills` has no IO by construction. The test constructs the service with
-`MagicMock`s standing in for the repository protocols, plus prepared data — or
-a mock for the data too, when only one field of a ten-field DTO matters. The
-assertions are on **how the mocks were called**: besides the return value,
-repository calls are the mill's entire output surface. `TransactionProtocol`
-needs no special stub — `MagicMock` speaks the context-manager protocol.
+A mill has no IO by construction, and how it is tested follows from where its
+rule lives:
 
-If a mill test needs a live database, the mill has leaked infrastructure — fix
-the mill, not the test.
+- [Rules in mills](../variants/rules-in-mills.md#tests) — the mill decides, so
+  it gets a unit test with mocked repository protocols.
+- [Rules in specs](../variants/rules-in-specs.md#tests) — a pure function
+  decides and gets property-based unit tests; the mill is covered by the
+  integration tests of its gate.
 
 ## Integration tests: gates and links
 
@@ -63,7 +63,8 @@ cherry-picked. Two utilities make this cheap:
 
 ## Coverage follows the layer
 
-An uncovered line is covered by the test type that **owns its layer**.
+An uncovered line is covered by the test type that **owns its layer**. For a
+mill, the [variant](../variants/index.md) names the owner.
 
 Never raise `links` or `gates` coverage with a mock-everything unit test of
 IO-bearing code — views, CLI commands, repositories, importers. Such a test

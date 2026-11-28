@@ -86,5 +86,8 @@ Worth opening for:
 - **Who is asking.** A `RequestContext` carrying the current site and user
   rides along with the request, so a mill is told who it is acting for instead
   of reaching for it.
+- **Decisions in `specs`.** `specs/enrollment.py` picks which waiting parties
+  move up the waitlist as a pure function, tested with Hypothesis properties —
+  the first half of [rules in specs](variants/rules-in-specs.md).
 - **Registries at scale.** Enough repositories and services to show what the
   flat `@cached_property` tree looks like well past a toy example.

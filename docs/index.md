@@ -38,7 +38,7 @@ derive the rest for the project in front of you.
 
 ```text
 pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
-specs   Business invariants (pure constants, no IO). Only for mills.
+specs   Business invariants (pure, no IO). Only for mills.
 mills   Business logic, services. Depends on pacts + specs. No side effects.
 links   Repositories, external clients. Depends on pacts + ORM / driver / SDK.
 gates   Entry points: request handlers, forms, routing, CLI commands. Depends on pacts.
@@ -63,8 +63,10 @@ exceptions without explicit approval.
   discovered.
 - **Ports are known, nouns are discovered.** `links` and `gates` get their
   axis on day one; `pacts` and `mills` find theirs as the domain emerges.
-- **The layer under test dictates the test type.** Pure core gets unit tests;
+- **The layer under test dictates the test type.** Pure code gets unit tests;
   IO-bearing boundaries get integration tests against real infrastructure.
+  Where a mill keeps its rule — and so how it is tested — is a
+  [variant](variants/index.md).
 
 ## Where to start
 

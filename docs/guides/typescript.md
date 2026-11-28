@@ -627,7 +627,8 @@ concerns, as listed in
 ## Testing
 
 The [layer decides the test type](../patterns/testing.md), whatever the
-runner. A mill gets a unit test with mocked repositories:
+runner. Under [rules in mills](../variants/rules-in-mills.md), a mill gets a
+unit test with mocked repositories:
 
 ```typescript
 // mills.test.ts
@@ -666,6 +667,9 @@ it("publishes and audits in one transaction", async () => {
   });
 });
 ```
+
+Under [rules in specs](../variants/rules-in-specs.md), the decision function
+gets fast-check properties and the mill is covered through its gate.
 
 `links` and `gates` get integration tests against real infrastructure. For a
 gate, that means a full request: `app.request("/proposals/7")` in Hono,

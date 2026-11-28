@@ -71,6 +71,10 @@ nav:
     - Request Lifecycle: patterns/lifecycle.md
     - Dependency Direction: patterns/dependency-direction.md
     - Testing: patterns/testing.md
+  - Variants:
+    - Overview: variants/index.md
+    - Rules in mills: variants/rules-in-mills.md
+    - Rules in specs: variants/rules-in-specs.md
   - Guides:
     - Django: guides/django.md
     - Import Linter: guides/import-linter.md
