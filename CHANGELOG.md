@@ -7,18 +7,19 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-28
+
 ### Added
 
 - An optional variant, "rules in specs": a mill's decision moves to a pure
-  function tested with property-based tests, and the mill is covered through
-  its gate. Keeping the rule in the mill stays the default
-- Dependency vulnerabilities are checked by Trivy against `poetry.lock`, in
-  `mise run trivy`, `mise run check` and `mise run update`
+  `specs` function tested with property-based tests, and the mill is covered
+  through its gate
+- Trivy checks `poetry.lock` for known vulnerabilities in `mise run trivy`,
+  `mise run check` and `mise run update`
 
 ### Changed
 
-- `specs` is defined as pure rather than constants-only: it may hold decision
-  functions
+- `specs` is pure, not constants-only: it may hold decision functions
 - A mill that holds no business rule gets no unit test; the integration tests
   of its gate cover it
 
@@ -277,7 +278,8 @@ and this project adheres to [Semantic Versioning].
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/fancysnake/glimpse-architecture/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/fancysnake/glimpse-architecture/compare/v0.2.0...v0.3.0
