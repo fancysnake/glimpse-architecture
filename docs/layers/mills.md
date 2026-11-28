@@ -2,10 +2,9 @@
 
 **Purpose:** Business logic and services — framework-free.
 
-`mills` is where business use cases live. It has no knowledge of HTTP, ORM
-models, or any specific framework. It operates entirely on the contracts
-defined in `pacts` and reaches data through the repository protocols defined
-there.
+`mills` is where domain rules live. It has no knowledge of HTTP, ORM models, or
+any specific framework. It operates entirely on the contracts defined in `pacts`
+and reaches data through the repository protocols defined there.
 
 ## Depends on / depended on by
 
@@ -48,15 +47,14 @@ constructor injection.
 ## What it contains
 
 - Service classes implementing business use cases
-- Business rules — enforced in service code, or delegated to a pure function
-  in `specs`; the two [variants](../variants/index.md) say which
+- Business invariants, enforced in service code (optional variant:
+  [rules in specs](../variants/rules-in-specs.md))
 - Domain logic (semantic validation, computation, orchestration)
 - Nothing that touches HTTP, templates, forms, ORM models, or framework internals
 
 GLIMPSE does not prescribe DDD tactical patterns — no aggregate or value-object
 classes are expected. Data moves as DTOs and write TypedDicts from `pacts`;
-the rules live in the services, or in the `specs` functions they call. The
-slicing axes are GLIMPSE's own — nouns and
+the rules live in the services. The slicing axes are GLIMPSE's own — nouns and
 verbs, not subdomains and bounded contexts — see
 [slicing](../slicing/index.md).
 

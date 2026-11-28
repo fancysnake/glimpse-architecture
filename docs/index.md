@@ -63,10 +63,8 @@ exceptions without explicit approval.
   discovered.
 - **Ports are known, nouns are discovered.** `links` and `gates` get their
   axis on day one; `pacts` and `mills` find theirs as the domain emerges.
-- **The layer under test dictates the test type.** Pure code gets unit tests;
+- **The layer under test dictates the test type.** Business rules get unit tests;
   IO-bearing boundaries get integration tests against real infrastructure.
-  Where a mill keeps its rule — and so how it is tested — is a
-  [variant](variants/index.md).
 
 ## Where to start
 

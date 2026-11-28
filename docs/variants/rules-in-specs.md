@@ -3,7 +3,9 @@
 A pure function in `specs` holds the business rule. The service reads state,
 asks the function what to do, and writes what the answer names.
 
-This [variant](index.md) is chosen per mill.
+**Optional variant.** By default a mill holds its business rule and
+[has a unit test](../patterns/testing.md#mills-the-rule-decides). This variant
+is an alternative, chosen per mill where [it fits](#when-it-fits).
 
 ## Shape
 
@@ -44,7 +46,8 @@ def decide_enrollment(
 ```
 
 The mill owns the transaction, the reads and the writes. It holds no rule of
-its own:
+its own: one `match` on the decision type, one write or one error per case, and
+no other condition.
 
 ```python
 # mills.py
@@ -85,11 +88,6 @@ class EnrollmentService:
 
 ## Tests
 
-| Code | Test type | Mocking |
-| --- | --- | --- |
-| decision function | **unit**, property-based | none |
-| mill | **integration**, through its gate | Mock at the lowest level, or not at all |
-
 **The decision function gets property-based tests**, one rule per property:
 Hypothesis in Python, fast-check in TypeScript.
 
@@ -106,11 +104,11 @@ def test_never_seats_past_the_limit(taken: int, waiting: int) -> None:
     assert isinstance(decision, Seated) == (taken < MAX_SESSION_SEATS)
 ```
 
-**The mill gets no unit test.** With the rule gone, a test on mocked
-repositories can assert only which methods were called. The
+**The mill gets no unit test**, as for any [mill that holds no
+rule](../patterns/testing.md#mills-the-rule-decides). The
 [full-request tests](../patterns/testing.md#integration-tests-gates-and-links)
-of its gate cover the mill instead, with at least one test per kind of
-decision the function can return.
+of its gate cover it, with at least one test per kind of decision the function
+can return.
 
 ## When it fits
 
@@ -118,8 +116,10 @@ The decision depends only on values the mill can read before it decides. Each
 public method of the mill then reads, calls one decision function, and writes.
 
 It does not fit when a decision needs data that exists only midway — a count
-under a lock taken after an earlier write, the result of an external call.
-Such a mill stays with [rules in mills](rules-in-mills.md).
+under a lock taken after an earlier write, the result of an external call — or
+when a refusal also writes. Such a mill keeps its rule in the service, the
+default. So does a mill that moves some rules to `specs` and keeps others: it
+still decides, so it keeps its unit test.
 
 ## Cost
 

@@ -9,10 +9,9 @@ and this project adheres to [Semantic Versioning].
 
 ### Added
 
-- Variants: two documented answers to where a mill keeps its business rules.
-  "Rules in mills" is the existing approach; "rules in specs" moves the
-  decision to a pure function tested with property-based tests, and covers
-  the mill through its gate
+- An optional variant, "rules in specs": a mill's decision moves to a pure
+  function tested with property-based tests, and the mill is covered through
+  its gate. Keeping the rule in the mill stays the default
 - Dependency vulnerabilities are checked by Trivy against `poetry.lock`, in
   `mise run trivy`, `mise run check` and `mise run update`
 
@@ -20,7 +19,8 @@ and this project adheres to [Semantic Versioning].
 
 - `specs` is defined as pure rather than constants-only: it may hold decision
   functions
-- The testing page states the mill test rule per variant
+- A mill that holds no business rule gets no unit test; the integration tests
+  of its gate cover it
 
 ## [0.5.0] - 2026-11-05
 

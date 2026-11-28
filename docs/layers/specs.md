@@ -7,9 +7,6 @@ against: the maximum number of seats in a session, the grace period before a
 subscription lapses, the minimum age for an account. These are *business* facts,
 not deployment facts.
 
-A mill that follows the [rules in specs](../variants/rules-in-specs.md)
-variant also keeps its decision here, as a pure function.
-
 It is distinct from `edges` (framework settings, environment variables) and from
 `pacts` (domain contracts).
 
@@ -57,8 +54,8 @@ changes together — because it was a contract all along.
 
 - Named constants expressing business invariants
 - Typed default values for domain behaviour
-- Pure decision functions, for mills that follow the
-  [rules in specs](../variants/rules-in-specs.md) variant
+- In the optional [rules in specs](../variants/rules-in-specs.md) variant:
+  pure decision functions and the frozen result types they return
 - Nothing that reads from `os.environ` or from framework settings
 - Nothing that performs IO — no file reads, no network, no database
 
