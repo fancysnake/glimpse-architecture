@@ -45,6 +45,10 @@ run = "trivy fs --scanners vuln --include-dev-deps --exit-code 1 --quiet poetry.
 description = "Everything CI runs"
 depends = ["skill-check", "lint", "docs", "trivy"]
 
+[tasks.pr-fix]
+description = "Pull request gate"
+depends = ["check"]
+
 [tasks.serve]
 description = "Serve the docs site with live reload"
 run = "mkdocs serve"

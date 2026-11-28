@@ -10,7 +10,9 @@ way it deserves. Testing them the same way throws that separation away.
 
 | Layer | Test type | Mocking |
 | --- | --- | --- |
-| `mills` — pure-logic core | **unit** | Mock at the highest level; assert every mock call |
+| `specs`, pure helpers — pure code | **unit** | None |
+| `mills` that holds a business rule — IO-free core | **unit** | Mock at the highest level; assert every mock call |
+| `mills` that holds [no business rule](#mills-the-rule-decides) | **integration**, through the gate | Mock at the lowest level, or not at all; assert side effects |
 | `links`, `gates`, adapters, templates — IO-bearing boundary | **integration** | Mock at the lowest level, or not at all; assert side effects |
 
 ## Where tests live
@@ -20,7 +22,7 @@ the code:
 
 ```text
 tests/
-├── unit/            # mills, plus pure helpers from any layer
+├── unit/            # mills, specs, plus pure helpers from any layer
 └── integration/     # gates (by port + page), links (by port + adapter)
 ```
 
@@ -34,17 +36,27 @@ about the layers constrains fixtures, factories, or helpers either — a test ma
 reach for whatever it needs to set the world up, including an adapter's
 internals.
 
-## Unit tests: mills
+## Mills: the rule decides
 
-`mills` has no IO by construction. The test constructs the service with
-`MagicMock`s standing in for the repository protocols, plus prepared data — or
-a mock for the data too, when only one field of a ten-field DTO matters. The
-assertions are on **how the mocks were called**: besides the return value,
-repository calls are the mill's entire output surface. `TransactionProtocol`
-needs no special stub — `MagicMock` speaks the context-manager protocol.
+How a mill is tested depends on one thing the code shows: whether the mill holds
+a business rule.
 
-If a mill test needs a live database, the mill has leaked infrastructure — fix
-the mill, not the test.
+**A mill that holds a rule gets a unit test.** This is the default. `mills` has
+no IO by construction. The test constructs the service with `MagicMock`s
+standing in for the repository protocols, plus prepared data — or a mock for the
+data too, when only one field of a ten-field DTO matters. The assertions are on
+**how the mocks were called**: besides the return value, repository calls are the
+mill's entire output surface. `TransactionProtocol` needs no special stub —
+`MagicMock` speaks the context-manager protocol.
+
+If a mill's unit test needs a live database, the mill has leaked infrastructure
+— fix the mill, not the test.
+
+**A mill that holds no rule gets no unit test.** A read-only or plain CRUD
+service gives a mock test nothing to assert but which methods were called. The
+integration tests of its gate cover it. The optional [rules in
+specs](../variants/rules-in-specs.md) variant moves a mill's rule to a pure
+function, which leaves the mill in this case.
 
 ## Integration tests: gates and links
 
@@ -63,7 +75,8 @@ cherry-picked. Two utilities make this cheap:
 
 ## Coverage follows the layer
 
-An uncovered line is covered by the test type that **owns its layer**.
+An uncovered line is covered by the test type that **owns its layer**. For a
+mill, [whether it holds a rule](#mills-the-rule-decides) names the owner.
 
 Never raise `links` or `gates` coverage with a mock-everything unit test of
 IO-bearing code — views, CLI commands, repositories, importers. Such a test

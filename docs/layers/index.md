@@ -47,7 +47,7 @@ contract (`pacts`) or configuration, which
 | Layer | Purpose | Depends on | Imported by |
 | --- | --- | --- | --- |
 | [pacts](pacts.md) | Protocols, DTOs, errors, enums, TypedDicts | nothing | everything |
-| [specs](specs.md) | Business invariants (pure constants, no IO) | pacts | mills only |
+| [specs](specs.md) | Business invariants (pure, no IO) | pacts | mills only |
 | [mills](mills.md) | Business logic and services | pacts + specs | inits |
 | [links](links.md) | Repositories, external clients | pacts + ORM | inits |
 | [gates](gates.md) | Views, forms, URLs, templatetags, CLI commands | pacts | inits (CLI composition only) |

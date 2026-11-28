@@ -1,6 +1,6 @@
 # specs
 
-**Purpose:** Business invariants — pure constants, no IO.
+**Purpose:** Business invariants — pure, no IO.
 
 `specs` holds the numbers and thresholds that the business rules are written
 against: the maximum number of seats in a session, the grace period before a
@@ -54,6 +54,8 @@ changes together — because it was a contract all along.
 
 - Named constants expressing business invariants
 - Typed default values for domain behaviour
+- In the optional [rules in specs](../variants/rules-in-specs.md) variant:
+  pure decision functions and the frozen result types they return
 - Nothing that reads from `os.environ` or from framework settings
 - Nothing that performs IO — no file reads, no network, no database
 

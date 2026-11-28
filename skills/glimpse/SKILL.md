@@ -22,7 +22,8 @@ disagree and carries the worked examples and the reasoning behind each rule.
 
 ```text
 pacts   Protocols, DTOs, errors, enums, TypedDicts. Depends on nothing.
-specs   Business invariants (pure constants, no IO). Only for mills; see below.
+specs   Business invariants (pure, no IO): constants; in the rules-in-specs
+        variant, decision functions and their result types. Only for mills.
 mills   Business logic, services. Depends on pacts + specs. No side-effect imports.
 links   Repositories, external clients. pacts + ORM / driver / SDK.
 gates   Entry points: request handlers, forms, routing, CLI commands. pacts only.
@@ -329,7 +330,8 @@ hatches, not invitations.
    injecting it is idiomatic. ISP at the service boundary: declare the
    two-or-three protocols actually used.
 4. **Mills have no side-effect imports.** Only protocols and DTOs from pacts,
-   constants from specs, pure helpers from anywhere (see **Layers**).
+   constants (in the rules-in-specs variant, also decision functions and their
+   result types) from specs, pure helpers from anywhere (see **Layers**).
 5. **Writes use TypedDicts.** DTOs for reads, TypedDicts for writes — gates →
    mills as input, mills → links as what repo write methods accept
    (`create(data: CreateProposalDict) -> ProposalDTO`; a `CreateXDict` has no
@@ -401,15 +403,39 @@ genuine smells are narrower: layering inversion (a low-level unit depending on a
 high-level orchestrator), cycles, and anemic delegation (one service calling
 another for a single trivial read it could do via a repo).
 
+## Mill rules and tests
+
+The code alone decides how a mill is tested: by whether it holds a business
+rule.
+
+- **Holds a rule** (the default, rules in mills). The service reads, decides,
+  writes; `specs` supplies constants. Test: **unit**, no IO; the service gets
+  `MagicMock`s for the repo protocols (and for data when only one field
+  matters); assert how the mocks were called. `MagicMock` covers
+  `TransactionProtocol` — it speaks the context-manager protocol.
+- **Holds no rule** (read-only, plain CRUD). No unit test — a mock test could
+  only assert which calls were made. Its gate's full-request tests cover it.
+
+**Variant: rules in specs** — optional, chosen per mill. A pure `specs`
+function decides; each mill method reads, calls one decision, writes what it
+names: one `match` on the decision type, one write or one error per case, no
+other condition. Such a mill holds no rule. Decision function: values in, no
+protocol argument, no clock read (`now` passed in), returns one frozen type per
+outcome (defined in `specs`), raises no business error — the mill maps a
+refusal to a pacts error. Tests: property-based unit tests of the function
+(Hypothesis, fast-check), one rule per property; at least one gate test per
+decision kind. Fits only when the decision depends on values read before it.
+Cost: the mill is exempt from unit-coverage and mutation gates.
+
+Gates never call a `specs` function.
+
 ## Testing
 
 The layer under test dictates the test type — not convenience, not what is
 easiest for coverage:
 
-- Pure-logic core (`mills`) → **unit** tests. No IO; the service gets
-  `MagicMock`s for the repo protocols (and for data when only one field
-  matters); assert how the mocks were called. `MagicMock` covers
-  `TransactionProtocol` — it speaks the context-manager protocol.
+- Pure code (`specs` functions, pure helpers) → **unit** tests, no mocks.
+- `mills` → **unit** tests or none of its own: see **Mill rules and tests**.
 - IO-bearing boundary layers (`links`, `gates`, adapters, templates) →
   **integration** tests against real infrastructure. Mock at the lowest level or
   not at all; assert side effects. A gate test is a full-request test via the
@@ -417,7 +443,7 @@ easiest for coverage:
   data, redirect URL, status), with strict templates that fail on unknown
   variables.
 
-Tests live in a repo-root `tests/` split by type — `tests/unit/` (mills, plus
+Tests live in a repo-root `tests/` split by type — `tests/unit/` (mills, specs,
 pure helpers from any layer; organised by convenience, not mirroring the
 code) and `tests/integration/` (gates by port + page, links by port +
 adapter).
@@ -501,7 +527,12 @@ unit-tested wherever it lives.
   or comes from the framework's settings accessor where there is one.
 
 **specs reading from `os.environ` or `settings`, or performing IO**
-: It is a constants layer. Environment-dependent values enter at `inits`.
+: It is a pure layer. Environment-dependent values enter at `inits`.
+
+**A `specs` function that takes a protocol, reads the clock, or raises a
+business error**
+: A decision function receives values and returns a decision. The mill reads,
+  passes `now` in, and turns a refusal into a `pacts` error.
 
 ### mills
 
@@ -517,6 +548,15 @@ unit-tested wherever it lives.
 **A page axis inside mills**
 : Gates mirror the interface, mills mirror the domain. A sitemap in `mills` is
   the interface leaking inward.
+
+**A mill with no unit test that holds a condition of its own**
+: Only a mill with no business rule goes without one. The single allowance is
+  one `match` per method on a decision type from `specs`, with one write or one
+  error per case. Any other condition is a rule, and the mill needs a unit test.
+
+**A rules-in-specs mill with fewer gate tests than decision kinds**
+: The mill has no unit test, so each kind of decision the function can return
+  needs an integration test through the gate.
 
 ### links
 

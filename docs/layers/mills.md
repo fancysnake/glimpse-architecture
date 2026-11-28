@@ -47,7 +47,8 @@ constructor injection.
 ## What it contains
 
 - Service classes implementing business use cases
-- Business invariants, enforced in service code
+- Business invariants, enforced in service code (optional variant:
+  [rules in specs](../variants/rules-in-specs.md))
 - Domain logic (semantic validation, computation, orchestration)
 - Nothing that touches HTTP, templates, forms, ORM models, or framework internals
 

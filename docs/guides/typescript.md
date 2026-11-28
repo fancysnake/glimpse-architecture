@@ -627,7 +627,8 @@ concerns, as listed in
 ## Testing
 
 The [layer decides the test type](../patterns/testing.md), whatever the
-runner. A mill gets a unit test with mocked repositories:
+runner. A [mill that holds a rule](../patterns/testing.md#mills-the-rule-decides)
+gets a unit test with mocked repositories:
 
 ```typescript
 // mills.test.ts

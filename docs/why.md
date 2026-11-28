@@ -52,7 +52,7 @@ If you already speak hexagonal, the translation is:
 | `gates` | driving (primary) adapters |
 | `inits` | composition root |
 | `edges` | bootstrap / configuration |
-| `specs` | no classic equivalent — policy constants |
+| `specs` | no classic equivalent — policy constants and pure decisions |
 
 ## Enforcement — human and AI
 
